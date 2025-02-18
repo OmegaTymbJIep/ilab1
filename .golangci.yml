@@ -1,0 +1,179 @@
+linters:
+  enable:
+    - bodyclose
+    - depguard
+    - dogsled
+    - dupword       # Detects duplicate words.
+    - durationcheck
+    - errchkjson
+    - exportloopref # Detects pointers to enclosing loop variables.
+    - gocritic      # Metalinter; detects bugs, performance, and styling issues.
+    - gocyclo
+    - gofumpt       # Detects whether code was gofumpt-ed.
+    - goimports
+    - gosec         # Detects security problems.
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell      # Detects commonly misspelled English words in comments.
+    - nakedret
+    - nilerr        # Detects code that returns nil even if it checks that the error is not nil.
+    - nolintlint    # Detects ill-formed or insufficient nolint directives.
+    - perfsprint    # Detects fmt.Sprintf uses that can be replaced with a faster alternative.
+    - prealloc      # Detects slice declarations that could potentially be pre-allocated.
+    - predeclared   # Detects code that shadows one of Go's predeclared identifiers
+    - reassign
+    - revive        # Metalinter; drop-in replacement for golint.
+    - staticcheck
+    - stylecheck    # Replacement for golint
+    - tenv          # Detects using os.Setenv instead of t.Setenv.
+    - thelper       # Detects test helpers without t.Helper().
+    - tparallel     # Detects inappropriate usage of t.Parallel().
+    - typecheck
+    - unconvert     # Detects unnecessary type conversions.
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+
+  disable:
+    - errcheck
+
+run:
+  timeout: 5m
+
+linters-settings:
+  depguard:
+    rules:
+      main:
+        deny:
+          - pkg: io/ioutil
+            desc: The io/ioutil package has been deprecated, see https://go.dev/doc/go1.16#ioutil
+  gocyclo:
+    min-complexity: 16
+  govet:
+    enable:
+      - shadow
+    settings:
+      shadow:
+        strict: true
+  lll:
+    line-length: 120
+  nakedret:
+    command: nakedret
+    pattern: ^(?P<path>.*?\\.go):(?P<line>\\d+)\\s*(?P<message>.*)$
+
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+        disabled: false
+      - name: errorf
+        severity: warning
+        disabled: false
+      - name: line-length-limit
+        severity: warning
+        arguments: [120]
+        disabled: false
+        exclude: ["TEST"]
+      - name: increment-decrement
+        severity: warning
+        disabled: false
+      - name: comment-spacings
+        severity: warning
+        disabled: false
+      - name: context-as-argument
+        severity: warning
+        disabled: false
+      - name: early-return
+        severity: warning
+        disabled: false
+      - name: empty-lines
+        severity: warning
+        disabled: false
+      - name: enforce-map-style
+        severity: warning
+        disabled: false
+      - name: enforce-slice-style
+        severity: warning
+        disabled: false
+      - name: error-naming
+        severity: warning
+        disabled: false
+      - name: error-strings
+        severity: warning
+        disabled: false
+      - name: identical-branches
+        severity: warning
+        disabled: false
+      - name: indent-error-flow
+        severity: warning
+        disabled: false
+      - name: modifies-parameter
+        severity: warning
+        disabled: false
+      - name: modifies-value-receiver
+        severity: warning
+        disabled: false
+      - name: optimize-operands-order
+        severity: warning
+        disabled: false
+      - name: package-comments
+        severity: warning
+        disabled: false
+      - name: range
+        severity: warning
+        disabled: false
+      - name: receiver-naming
+        severity: warning
+        disabled: false
+      - name: string-format
+        severity: warning
+        disabled: false
+        arguments:
+          - [ "fmt.Errorf[0]", "/(^|[^\\.!?])$/", "must not end in punctuation" ]
+          - [ "fmt.Errorf[0]", "!/(^.*: %s)$/", "use %w for errors wrapping" ]
+          - [ "errors.New[0]", "/(^|[^\\.!?])$/", "must not end in punctuation" ]
+      - name: string-of-int
+        severity: warning
+        disabled: false
+      - name: struct-tag
+        severity: warning
+        disabled: false
+      - name: superfluous-else
+        severity: warning
+        disabled: false
+      - name: unchecked-type-assertion
+        severity: warning
+        disabled: false
+      - name: unexported-return
+        severity: warning
+        disabled: false
+      - name: unnecessary-stmt
+        severity: warning
+        disabled: false
+      - name: var-declaration
+        severity: warning
+        disabled: false
+
+issues:
+  # The default exclusion rules are a bit too permissive, so copying the relevant ones below
+  exclude-use-default: false
+
+  exclude:
+    - parameter .* always receives
+    - declaration of "(err|ctx)" shadows declaration at
+
+  exclude-files:
+    - .*dev.*
+    - dev.*
+    - .*dev
+
+  exclude-rules: []
+
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0

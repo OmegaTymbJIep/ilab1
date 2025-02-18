@@ -1,0 +1,12 @@
+log:
+  level: debug
+  disable_sentry: true
+
+db:
+  url: postgres://ilab1:ilab1@localhost:5432/ilab1?sslmode=disable
+
+mvc:
+  templates_dir: ./internal/service/mvc/views/templates
+
+listener:
+  addr: :8000
