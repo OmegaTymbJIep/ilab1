@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In / Sign Up</title>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script> <!-- ✅ Load bcrypt first -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,6 +74,14 @@
         .hidden {
             display: none;
         }
+        #strengthCanvas {
+            background: #ccc;
+            display: block;
+            margin: 0px auto;
+            border: 0px solid #ccc;
+            width: 90%;
+            height: 3px;
+        }
     </style>
 </head>
 <body>
@@ -82,18 +91,30 @@
 
     {{ if .Error }}<p class="error">{{ .Error }}</p>{{ end }}
 
+    <!-- Sign In Form -->
     <form id="login-form" action="/auth/login" method="post">
         <input type="email" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Password" required>
         <button type="submit" class="btn-primary">Login</button>
     </form>
 
-    <form id="register-form" action="/auth/register" method="post" class="hidden">
+    <!-- Sign Up Form -->
+    <form id="register-form" action="/auth/register" method="post" class="hidden" onsubmit="return hashPasswordAndSubmit(event)">
         <input type="email" name="email" placeholder="Email" required>
         <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
+
+        <input type="password" id="register-password" name="plainPassword"
+               placeholder="Password" required oninput="onPasswordInput()">
+
+        <!-- Canvas for showing password strength -->
+        <canvas id="strengthCanvas"></canvas>
+
         <input type="text" name="first_name" placeholder="First Name">
         <input type="text" name="last_name" placeholder="Last Name">
+
+        <!-- Hidden field to store hashed password -->
+        <input type="hidden" id="passwordHash" name="password_hash">
+
         <button type="submit" class="btn-primary">Register</button>
     </form>
 
@@ -103,24 +124,84 @@
 </div>
 
 <script>
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    const toggleBtn = document.getElementById('toggle-btn');
-    const formTitle = document.getElementById('form-title');
+    // Toggle between Sign In and Sign Up forms
+    document.getElementById('toggle-btn').addEventListener('click', function () {
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const formTitle = document.getElementById('form-title');
 
-    toggleBtn.addEventListener('click', function() {
         if (loginForm.classList.contains('hidden')) {
             loginForm.classList.remove('hidden');
             registerForm.classList.add('hidden');
             formTitle.textContent = "Sign In";
-            toggleBtn.textContent = "Sign Up";
+            this.textContent = "Sign Up";
         } else {
             loginForm.classList.add('hidden');
             registerForm.classList.remove('hidden');
             formTitle.textContent = "Sign Up";
-            toggleBtn.textContent = "Sign In";
+            this.textContent = "Sign In";
         }
     });
+
+    function evaluatePasswordStrength(password) {
+        let score = 0;
+        if (!password) return 0;
+        if (password.length >= 8) score += 20;
+        if (/[A-Z]/.test(password)) score += 20;
+        if (/[0-9]/.test(password)) score += 20;
+        if (/[^A-Za-z0-9]/.test(password)) score += 20;
+        if (password.length >= 12) score += 20;
+        return score;
+    }
+
+    function drawStrengthMeter(score) {
+        const canvas = document.getElementById('strengthCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ccc';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = score < 40 ? 'red' : score < 80 ? 'orange' : 'green';
+        ctx.fillRect(0, 0, (canvas.width * score) / 100, canvas.height);
+    }
+
+    function onPasswordInput() {
+        const password = document.getElementById('register-password').value;
+        const score = evaluatePasswordStrength(password);
+        drawStrengthMeter(score);
+    }
+
+    async function hashPasswordAndSubmit(event) {
+        event.preventDefault();
+        const passwordEl = document.getElementById('register-password');
+        const passwordHashEl = document.getElementById('passwordHash');
+
+        const password = passwordEl.value;
+        passwordEl.value = "";
+
+        const form = document.getElementById('register-form');
+
+        if (!password) {
+            alert("Please enter a password");
+            return false;
+        }
+
+        try {
+            const bcrypt = dcodeIO.bcrypt;
+            const hash = await bcrypt.hash(password, 10);
+            passwordHashEl.value = hash;
+
+            passwordEl.setAttribute("disabled", "true");
+
+            form.submit();
+        } catch (err) {
+            console.error("Error hashing password:", err);
+            alert("Error hashing password. Check console for more details.");
+            return false;
+        }
+    }
+
 </script>
 
 </body>
