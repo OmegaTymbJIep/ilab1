@@ -9,7 +9,7 @@ import (
 // IService describes all the external methods that can be used in the API handlers.
 type IService interface{}
 
-func initRouter(log *logan.Entry, svc IService) chi.Router {
+func router(log *logan.Entry, svc IService) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(
@@ -21,13 +21,7 @@ func initRouter(log *logan.Entry, svc IService) chi.Router {
 		),
 	)
 
+	r.Route("/api/v1", func(r chi.Router) {})
+
 	return r
-}
-
-func (a *api) finalRouter() chi.Router {
-	r := a.router.Route("/v1", func(r chi.Router) {})
-
-	a.router.Mount("/api", r)
-
-	return a.router
 }

@@ -33,9 +33,11 @@ func NewMVC(log *logan.Entry, db data.MainQ, cfg config.MVCConfig) (*MVC, error)
 }
 
 func (m *MVC) Register(r chi.Router) {
-	r = r.Route("/", func(r chi.Router) {
-		r.Get("/login", m.auth.LoginPage)
+	r.Route("/", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.Get("/", m.auth.AuthPage)
+			r.Post("/login", m.auth.Login)
+			r.Post("/register", m.auth.Register)
+		})
 	})
-
-	r.Mount("/", r)
 }

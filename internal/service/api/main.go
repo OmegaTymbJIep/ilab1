@@ -26,13 +26,13 @@ func New(log *logan.Entry, listener net.Listener, service IService) (API, error)
 		log:      log,
 		listener: listener,
 
-		router: initRouter(log, service),
+		router: router(log, service),
 	}, nil
 }
 
 func (a *api) Run(ctx context.Context) {
 	a.log.Info("API started")
-	ape.Serve(ctx, a.finalRouter(), a, ape.ServeOpts{})
+	ape.Serve(ctx, a.Router(), a, ape.ServeOpts{})
 }
 
 func (a *api) Log() *logan.Entry {

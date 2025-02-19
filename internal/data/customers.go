@@ -23,6 +23,8 @@ type Customer struct {
 	FirstName    *string   `db:"first_name"    structs:"first_name"`
 	LastName     *string   `db:"last_name"     structs:"last_name"`
 	UpdatedAt    time.Time `db:"updated_at"    structs:"-"`
+
+	account []Accounts
 }
 
 func (c *Customer) GetID() *uuid.UUID {

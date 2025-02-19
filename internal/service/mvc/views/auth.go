@@ -1,5 +1,5 @@
 package views
 
-type Login struct {
+type Auth struct {
 	Error string
 }

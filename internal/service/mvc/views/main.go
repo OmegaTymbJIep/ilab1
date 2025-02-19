@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	LoginTemplateName = "login.html"
+	AuthTemplateName = "auth.html"
 )
 
 func ReadTemplates(templatesDir string) (*template.Template, error) {
@@ -18,7 +18,7 @@ func ReadTemplates(templatesDir string) (*template.Template, error) {
 			return fmt.Errorf("failed to walk templates dir: %w", err)
 		}
 
-		if !info.IsDir() { // Only print files, not directories
+		if !info.IsDir() {
 			absPath, err := filepath.Abs(path)
 			if err != nil {
 				return err
