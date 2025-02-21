@@ -39,3 +39,18 @@ func (q *customersQ) WhereUsername(username string) data.Customers {
 	q.sel = q.sel.Where(sq.Eq{usernameColumnName: username})
 	return q
 }
+
+// IsUnique checks that it doesn't exist a customer with the same email or username.
+func (q *customersQ) IsUnique(email, username string) (bool, error) {
+	var count int
+
+	err := q.db.Get(&count, sq.Select("COUNT(*)").
+		From(customersTableName).
+		Where(sq.Or{
+			sq.Eq{emailColumnName: email},
+			sq.Eq{usernameColumnName: username},
+		}),
+	)
+
+	return count == 0, err
+}

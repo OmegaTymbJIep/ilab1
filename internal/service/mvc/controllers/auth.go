@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"html/template"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"gitlab.com/distributed_lab/logan/v3"
 
 	"github.com/omegatymbjiep/ilab1/internal/data"
+	"github.com/omegatymbjiep/ilab1/internal/service/mvc/controllers/requests"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/models"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/views"
 )
@@ -39,7 +41,51 @@ func (c *AuthController) AuthPage(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
+	//req, err := requests.NewLogin(r)
+	//if err != nil {
+	//	c.log.WithError(err).Debug("bad request")
+	//	ape.RenderErr(w, requests.BadRequest(err)...)
+	//	return
+	//}
+	//
+	//token, err := c.model.Login(req)
+	//if err != nil {
+	//	if errors.Is(err, models.ErrorUserNotFound) {
+	//		c.log.WithError(err).Debug("not found")
+	//		ape.RenderErr(w, problems.NotFound())
+	//		return
+	//	}
+	//
+	//	c.log.WithError(err).Error("failed to login user")
+	//	ape.RenderErr(w, problems.InternalError())
+	//	return
+	//}
+	//
+	//// TODO: render response here
+	//ape.Render(w, token)
 }
 
 func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
+	req, err := requests.NewRegister(r)
+	if err != nil {
+		c.log.WithError(err).Debug("bad request")
+		ape.RenderErr(w, requests.BadRequest(err)...)
+		return
+	}
+
+	id, err := c.model.Register(req)
+	if err != nil {
+		if errors.Is(err, models.ErrorEmailOrUsernameTaken) {
+			c.log.WithError(err).Debug("conflict")
+			ape.RenderErr(w, problems.Conflict())
+			return
+		}
+
+		c.log.WithError(err).Error("failed to register new user")
+		ape.RenderErr(w, problems.InternalError())
+		return
+	}
+
+	// TODO: render response here
+	ape.Render(w, id)
 }
