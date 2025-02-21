@@ -176,14 +176,37 @@
         event.preventDefault();
         const passwordEl = document.getElementById('register-password');
         const passwordHashEl = document.getElementById('passwordHash');
+        const usernameEl = document.querySelector('input[name="username"]');
+        const firstNameEl = document.querySelector('input[name="first_name"]');
+        const lastNameEl = document.querySelector('input[name="last_name"]');
 
         const password = passwordEl.value;
-        passwordEl.value = "";
-
-        const form = document.getElementById('register-form');
+        const username = usernameEl.value;
+        const firstName = firstNameEl.value;
+        const lastName = lastNameEl.value;
 
         if (!password) {
-            alert("Please enter a password");
+            alert("Please enter a password.");
+            return false;
+        }
+
+        if (password.length < 8) {
+            alert("Password must be at least 8 characters.");
+            return false;
+        }
+
+        if (username.length < 3 || username.length > 50) {
+            alert("Username must be between 3 and 50 characters.");
+            return false;
+        }
+
+        if (firstName && (firstName.length < 3 || firstName.length > 50)) {
+            alert("First Name must be between 3 and 50 characters.");
+            return false;
+        }
+
+        if (lastName && (lastName.length < 3 || lastName.length > 50)) {
+            alert("Last Name must be between 3 and 50 characters.");
             return false;
         }
 
@@ -194,7 +217,7 @@
 
             passwordEl.setAttribute("disabled", "true");
 
-            form.submit();
+            document.getElementById('register-form').submit();
         } catch (err) {
             console.error("Error hashing password:", err);
             alert("Error hashing password. Check console for more details.");
