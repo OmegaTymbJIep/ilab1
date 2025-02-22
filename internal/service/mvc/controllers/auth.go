@@ -9,7 +9,6 @@ import (
 	"gitlab.com/distributed_lab/ape/problems"
 	"gitlab.com/distributed_lab/logan/v3"
 
-	"github.com/omegatymbjiep/ilab1/internal/data"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/controllers/requests"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/models"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/views"
@@ -17,14 +16,13 @@ import (
 
 type AuthController struct {
 	templates *template.Template
-
-	log   *logan.Entry
-	model *models.Auth
+	model     *models.Auth
+	log       *logan.Entry
 }
 
-func NewAuthController(log *logan.Entry, db data.MainQ, templates *template.Template) *AuthController {
+func NewAuthController(log *logan.Entry, model *models.Auth, templates *template.Template) *AuthController {
 	return &AuthController{
-		model:     models.NewAuth(db),
+		model:     model,
 		templates: templates,
 		log:       log.WithField("controller", "auth"),
 	}
@@ -73,10 +71,10 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := c.model.Register(req)
+	jwt, err := c.model.Register(req)
 	if err != nil {
 		if errors.Is(err, models.ErrorEmailOrUsernameTaken) {
-			c.log.WithError(err).Debug("conflict")
+			c.log.WithField("reason", err).Debug("conflict")
 			ape.RenderErr(w, problems.Conflict())
 			return
 		}
@@ -87,5 +85,5 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: render response here
-	ape.Render(w, id)
+	ape.Render(w, jwt)
 }

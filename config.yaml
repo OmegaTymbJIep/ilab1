@@ -8,5 +8,8 @@ db:
 mvc:
   templates_dir: ./internal/service/mvc/views/templates
 
+jwt:
+  signing_key_path: ./jwt_signing_key.dev
+
 listener:
   addr: :8000

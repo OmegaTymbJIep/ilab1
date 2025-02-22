@@ -2,8 +2,13 @@ package models
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+
+	"github.com/lestrrat-go/jwx/v3/jwt"
 
 	"github.com/omegatymbjiep/ilab1/internal/data"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/controllers/requests"
@@ -13,13 +18,25 @@ var ErrorEmailOrUsernameTaken = fmt.Errorf("email or username is already taken")
 
 type Auth struct {
 	db data.MainQ
+
+	jwtSigningKey   jwk.Key
+	jwtVerifyingKey jwk.Key
 }
 
-func NewAuth(db data.MainQ) *Auth {
-	return &Auth{db: db}
+func NewAuth(db data.MainQ, jwtSigningKey jwk.Key) (*Auth, error) {
+	jwtVerifyingKey, err := jwtSigningKey.PublicKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get JWT public key: %w", err)
+	}
+
+	return &Auth{
+		db:              db,
+		jwtSigningKey:   jwtSigningKey,
+		jwtVerifyingKey: jwtVerifyingKey,
+	}, nil
 }
 
-func (a *Auth) Register(req *requests.Register) (*uuid.UUID, error) {
+func (a *Auth) Register(req *requests.Register) (string, error) {
 	customers := a.db.Customers()
 
 	customer := &data.Customer{
@@ -46,8 +63,31 @@ func (a *Auth) Register(req *requests.Register) (*uuid.UUID, error) {
 
 		return nil
 	}); err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &customer.ID, nil
+	token, err := a.newUserJWT(customer.ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create JWT: %w", err)
+	}
+
+	return token, nil
+}
+
+func (a *Auth) newUserJWT(customerID uuid.UUID) (string, error) {
+	token, err := jwt.NewBuilder().
+		Claim("uid", customerID.String()).
+		Claim("exp", time.Now().Add(time.Hour*24).Unix()).
+		Claim("iat", time.Now().Unix()).
+		Build()
+	if err != nil {
+		return "", fmt.Errorf("failed to build token: %w", err)
+	}
+
+	signed, err := jwt.Sign(token, jwt.WithKey(jwa.ES256(), a.jwtSigningKey))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+
+	return string(signed), nil
 }

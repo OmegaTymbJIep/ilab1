@@ -7,13 +7,13 @@ import (
 	"gitlab.com/distributed_lab/kit/kv"
 )
 
-type MVCConfig struct {
+type MVC struct {
 	TemplatesDir string `fig:"templates_dir,required"`
 }
 
-func (c *config) MVC() MVCConfig {
+func (c *config) MVC() *MVC {
 	return c.mvc.Do(func() interface{} {
-		var cfg MVCConfig
+		var cfg MVC
 
 		err := figure.
 			Out(&cfg).
@@ -23,6 +23,6 @@ func (c *config) MVC() MVCConfig {
 			panic(fmt.Errorf("failed to figure out mvc: %w", err))
 		}
 
-		return cfg
-	}).(MVCConfig)
+		return &cfg
+	}).(*MVC)
 }

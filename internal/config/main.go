@@ -12,7 +12,8 @@ type Config interface {
 	comfig.Logger
 	pgdb.Databaser
 
-	MVC() MVCConfig
+	MVC() *MVC
+	JWT() *JWT
 	Listener() net.Listener
 }
 
@@ -22,6 +23,7 @@ type config struct {
 
 	listener comfig.Once
 	mvc      comfig.Once
+	jwt      comfig.Once
 
 	getter kv.Getter
 }
