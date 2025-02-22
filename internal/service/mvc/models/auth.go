@@ -7,14 +7,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwk"
-
 	"github.com/lestrrat-go/jwx/v3/jwt"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/omegatymbjiep/ilab1/internal/data"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/controllers/requests"
 )
 
 var ErrorEmailOrUsernameTaken = fmt.Errorf("email or username is already taken")
+var ErrorUserNotFound = fmt.Errorf("user not found")
+var ErrorInvalidPassword = fmt.Errorf("invalid password")
 
 type Auth struct {
 	db data.MainQ
@@ -34,6 +36,31 @@ func NewAuth(db data.MainQ, jwtSigningKey jwk.Key) (*Auth, error) {
 		jwtSigningKey:   jwtSigningKey,
 		jwtVerifyingKey: jwtVerifyingKey,
 	}, nil
+}
+
+func (a *Auth) Login(req *requests.Login) (string, error) {
+	customers := a.db.Customers()
+
+	customer := new(data.Customer)
+	ok, err := customers.WhereEmail(req.Email).Get(customer)
+	if err != nil {
+		return "", fmt.Errorf("failed to get customer: %w", err)
+	}
+
+	if !ok {
+		return "", ErrorUserNotFound
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(customer.PasswordHash), []byte(req.Password)) != nil {
+		return "", ErrorInvalidPassword
+	}
+
+	token, err := a.newUserJWT(customer.ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create JWT: %w", err)
+	}
+
+	return token, nil
 }
 
 func (a *Auth) Register(req *requests.Register) (string, error) {

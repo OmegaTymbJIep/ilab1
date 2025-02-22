@@ -4,7 +4,6 @@ import (
 	"net/http"
 )
 
-// Register struct with validation tags
 type Register struct {
 	Email        string `validate:"required,email"`
 	Username     string `validate:"required,min=3,max=50"`
@@ -21,6 +20,25 @@ func NewRegister(r *http.Request) (*Register, error) {
 		PasswordHash: r.FormValue("password_hash"),
 		FirstName:    r.FormValue("first_name"),
 		LastName:     r.FormValue("last_name"),
+	}
+
+	if err := validate.Struct(req); err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+type Login struct {
+	Email    string `validate:"required,email"`
+	Password string `validate:"required,hexadecimal,len=64"`
+}
+
+// NewLogin parses HTTP request and validates input
+func NewLogin(r *http.Request) (*Login, error) {
+	req := Login{
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
 	}
 
 	if err := validate.Struct(req); err != nil {

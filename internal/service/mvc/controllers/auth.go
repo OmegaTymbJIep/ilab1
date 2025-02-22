@@ -39,28 +39,34 @@ func (c *AuthController) AuthPage(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
-	//req, err := requests.NewLogin(r)
-	//if err != nil {
-	//	c.log.WithError(err).Debug("bad request")
-	//	ape.RenderErr(w, requests.BadRequest(err)...)
-	//	return
-	//}
-	//
-	//token, err := c.model.Login(req)
-	//if err != nil {
-	//	if errors.Is(err, models.ErrorUserNotFound) {
-	//		c.log.WithError(err).Debug("not found")
-	//		ape.RenderErr(w, problems.NotFound())
-	//		return
-	//	}
-	//
-	//	c.log.WithError(err).Error("failed to login user")
-	//	ape.RenderErr(w, problems.InternalError())
-	//	return
-	//}
-	//
-	//// TODO: render response here
-	//ape.Render(w, token)
+	req, err := requests.NewLogin(r)
+	if err != nil {
+		c.log.WithError(err).Debug("bad request")
+		ape.RenderErr(w, requests.BadRequest(err)...)
+		return
+	}
+
+	token, err := c.model.Login(req)
+	if err != nil {
+		if errors.Is(err, models.ErrorUserNotFound) {
+			c.log.WithError(err).Debug("not found")
+			ape.RenderErr(w, problems.NotFound())
+			return
+		}
+
+		if errors.Is(err, models.ErrorInvalidPassword) {
+			c.log.WithError(err).Debug("unauthorized")
+			ape.RenderErr(w, problems.Unauthorized())
+			return
+		}
+
+		c.log.WithError(err).Error("failed to login user")
+		ape.RenderErr(w, problems.InternalError())
+		return
+	}
+
+	// TODO: render response here
+	ape.Render(w, token)
 }
 
 func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {

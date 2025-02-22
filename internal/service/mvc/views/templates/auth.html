@@ -1,86 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Sign In / Sign Up</title>
-    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script> <!-- ✅ Load bcrypt first -->
+
+    <!-- 1) Load Keccak (via js-sha3) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.9.3/sha3.min.js"></script>
+    <!-- 2) Load BcryptJS -->
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f4f4f4;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; background-color: #f4f4f4;
         }
         .container {
-            width: 320px;
-            text-align: center;
-            background: white;
-            padding: 25px 35px;
-            border-radius: 8px;
+            width: 320px; text-align: center; background: white;
+            padding: 25px 35px; border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        h2 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-        .error {
-            color: red;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
+        h2 { margin-bottom: 15px; color: #333; }
+        .error { color: red; font-size: 14px; margin-bottom: 10px; }
         input {
-            width: 80%;
-            padding: 12px 15px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-            outline: none;
+            width: 80%; padding: 12px 15px; margin: 10px 0;
+            border: 1px solid #ccc; border-radius: 6px; font-size: 16px; outline: none;
         }
         input:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            border-color: #007bff; box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
         button {
-            width: 80%;
-            padding: 12px;
-            margin-top: 10px;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 6px;
-            transition: background 0.3s ease;
+            width: 80%; padding: 12px; margin-top: 10px; border: none; cursor: pointer;
+            font-size: 16px; border-radius: 6px; transition: background 0.3s ease;
         }
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background-color: #545b62;
-        }
-        .switch-container {
-            margin-top: 0px;
-        }
-        .hidden {
-            display: none;
-        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover { background-color: #545b62; }
+        .switch-container { margin-top: 0px; }
+        .hidden { display: none; }
         #strengthCanvas {
-            background: #ccc;
-            display: block;
-            margin: 0px auto;
-            border: 0px solid #ccc;
-            width: 90%;
-            height: 3px;
+            background: #ccc; display: block; margin: 0px auto;
+            width: 90%; height: 3px; border: 0px solid #ccc;
         }
     </style>
 </head>
@@ -89,31 +51,42 @@
 <div class="container">
     <h2 id="form-title">Sign In</h2>
 
+    <!-- Error message (if needed) -->
     {{ if .Error }}<p class="error">{{ .Error }}</p>{{ end }}
 
     <!-- Sign In Form -->
-    <form id="login-form" action="/auth/login" method="post">
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
+    <form id="login-form" action="/auth/login" method="POST" onsubmit="return hashPasswordLogin(event)">
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" id="login-password" name="plainPassword" placeholder="Password" required />
+
+        <!-- Hidden field to store Keccak hash before submission -->
+        <input type="hidden" id="loginPasswordHash" name="password" />
+
         <button type="submit" class="btn-primary">Login</button>
     </form>
 
     <!-- Sign Up Form -->
-    <form id="register-form" action="/auth/register" method="post" class="hidden" onsubmit="return hashPasswordAndSubmit(event)">
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="text" name="username" placeholder="Username" required>
+    <form id="register-form" action="/auth/register" method="POST" class="hidden" onsubmit="return hashPasswordAndSubmit(event)">
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="text" name="username" placeholder="Username" required />
 
-        <input type="password" id="register-password" name="plainPassword"
-               placeholder="Password" required oninput="onPasswordInput()">
+        <input
+                type="password"
+                id="register-password"
+                name="plainPassword"
+                placeholder="Password"
+                required
+                oninput="onPasswordInput()"
+        />
 
-        <!-- Canvas for showing password strength -->
+        <!-- Password Strength Canvas -->
         <canvas id="strengthCanvas"></canvas>
 
-        <input type="text" name="first_name" placeholder="First Name">
-        <input type="text" name="last_name" placeholder="Last Name">
+        <input type="text" name="first_name" placeholder="First Name" />
+        <input type="text" name="last_name" placeholder="Last Name" />
 
-        <!-- Hidden field to store hashed password -->
-        <input type="hidden" id="passwordHash" name="password_hash">
+        <!-- Hidden field to store final "bcrypt(keccak(password))" -->
+        <input type="hidden" id="registrationPasswordHash" name="password_hash" />
 
         <button type="submit" class="btn-primary">Register</button>
     </form>
@@ -124,18 +97,22 @@
 </div>
 
 <script>
-    // Toggle between Sign In and Sign Up forms
+    /************************************************
+     * 1) TOGGLE BETWEEN LOGIN & REGISTER FORMS     *
+     ************************************************/
     document.getElementById('toggle-btn').addEventListener('click', function () {
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const formTitle = document.getElementById('form-title');
+        const loginForm   = document.getElementById('login-form');
+        const registerForm= document.getElementById('register-form');
+        const formTitle   = document.getElementById('form-title');
 
         if (loginForm.classList.contains('hidden')) {
+            // Show login, hide register
             loginForm.classList.remove('hidden');
             registerForm.classList.add('hidden');
             formTitle.textContent = "Sign In";
             this.textContent = "Sign Up";
         } else {
+            // Show register, hide login
             loginForm.classList.add('hidden');
             registerForm.classList.remove('hidden');
             formTitle.textContent = "Sign Up";
@@ -143,11 +120,14 @@
         }
     });
 
+    /************************************************
+     * 2) PASSWORD STRENGTH METER FOR REGISTER FORM *
+     ************************************************/
     function evaluatePasswordStrength(password) {
         let score = 0;
         if (!password) return 0;
-        if (password.length >= 8) score += 20;
-        if (/[A-Z]/.test(password)) score += 20;
+        if (password.length >= 8)  score += 20;
+        if (/[A-Z]/.test(password))score += 20;
         if (/[0-9]/.test(password)) score += 20;
         if (/[^A-Za-z0-9]/.test(password)) score += 20;
         if (password.length >= 12) score += 20;
@@ -159,10 +139,12 @@
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Gray background
         ctx.fillStyle = '#ccc';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = score < 40 ? 'red' : score < 80 ? 'orange' : 'green';
+        // Fill color changes based on score
+        ctx.fillStyle = (score < 40) ? 'red' : (score < 80) ? 'orange' : 'green';
         ctx.fillRect(0, 0, (canvas.width * score) / 100, canvas.height);
     }
 
@@ -172,19 +154,32 @@
         drawStrengthMeter(score);
     }
 
+    /************************************************
+     * 3) SETUP A "PUBLIC SALT" FOR KECCAK          *
+     ************************************************/
+    const PUBLIC_SALT = "ilab1";
+    // ↑ This can be any fixed string you want to append.
+
+    /************************************************
+     * 4) REGISTRATION FORM                         *
+     *    => bcrypt( keccak( password + PUBLIC_SALT ) )
+     *    => store in hidden input "registrationPasswordHash"
+     ************************************************/
     async function hashPasswordAndSubmit(event) {
         event.preventDefault();
-        const passwordEl = document.getElementById('register-password');
-        const passwordHashEl = document.getElementById('passwordHash');
-        const usernameEl = document.querySelector('input[name="username"]');
-        const firstNameEl = document.querySelector('input[name="first_name"]');
-        const lastNameEl = document.querySelector('input[name="last_name"]');
 
-        const password = passwordEl.value;
-        const username = usernameEl.value;
-        const firstName = firstNameEl.value;
-        const lastName = lastNameEl.value;
+        const passwordEl   = document.getElementById('register-password');
+        const passwordHashEl = document.getElementById('registrationPasswordHash');
+        const usernameEl   = document.querySelector('#register-form input[name="username"]');
+        const firstNameEl  = document.querySelector('#register-form input[name="first_name"]');
+        const lastNameEl   = document.querySelector('#register-form input[name="last_name"]');
 
+        const password = passwordEl.value.trim();
+        const username = usernameEl.value.trim();
+        const firstName= firstNameEl.value.trim();
+        const lastName = lastNameEl.value.trim();
+
+        // Basic checks
         if (!password) {
             alert("Please enter a password.");
             return false;
@@ -211,20 +206,54 @@
         }
 
         try {
-            const bcrypt = dcodeIO.bcrypt;
-            const hash = await bcrypt.hash(password, 10);
-            passwordHashEl.value = hash;
+            // 1) keccak( plaintext_password + PUBLIC_SALT )
+            const keccakInput = password + PUBLIC_SALT;
+            const keccakHash  = sha3_256(keccakInput);
 
+            // 2) bcrypt( keccakHash )
+            const hash = await dcodeIO.bcrypt.hash(keccakHash, 10);
+
+            // 3) Put final hash into hidden field, disable plaintext
+            passwordHashEl.value = hash;
             passwordEl.setAttribute("disabled", "true");
 
-            document.getElementById('register-form').submit();
+            // 4) Submit form
+            event.target.submit();
         } catch (err) {
             console.error("Error hashing password:", err);
-            alert("Error hashing password. Check console for more details.");
+            alert("Error hashing password. Check console for details.");
             return false;
         }
     }
 
+    /************************************************
+     * 5) LOGIN FORM                                *
+     *    => keccak( password + PUBLIC_SALT )
+     *    => store that in hidden field "password_hash"
+     *    => server does bcrypt.compare( keccakHash, storedHash )
+     ************************************************/
+    function hashPasswordLogin(event) {
+        event.preventDefault();
+        const passwordEl = document.getElementById('login-password');
+        const hiddenHashEl = document.getElementById('loginPasswordHash');
+
+        const password = passwordEl.value.trim();
+        if (!password) {
+            alert("Please enter your password.");
+            return false;
+        }
+
+        // 1) keccak( plaintext_password + PUBLIC_SALT )
+        const keccakInput = password + PUBLIC_SALT;
+        const keccakHash  = sha3_256(keccakInput);
+
+        // 2) Put keccakHash in hidden field, disable plaintext field
+        hiddenHashEl.value = keccakHash;
+        passwordEl.setAttribute("disabled", "true");
+
+        // 3) Submit
+        event.target.submit();
+    }
 </script>
 
 </body>

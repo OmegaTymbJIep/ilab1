@@ -43,13 +43,13 @@ func BadRequest(err error) []*jsonapi.ErrorObject {
 func toJsonapiErrors(m validator.ValidationErrors) []*jsonapi.ErrorObject {
 	errs := make([]*jsonapi.ErrorObject, 0, len(m))
 
-	for key, value := range m {
+	for _, err := range m {
 		errs = append(errs, &jsonapi.ErrorObject{
 			Title:  http.StatusText(http.StatusBadRequest),
 			Status: fmt.Sprintf("%d", http.StatusBadRequest),
 			Meta: &map[string]interface{}{
-				"field": key,
-				"error": value.Error(),
+				"field": err.Field(),
+				"error": err.Tag(),
 			},
 		})
 	}
