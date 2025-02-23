@@ -15,6 +15,7 @@ type Accounts interface {
 type Account struct {
 	Entity[uuid.UUID] `structs:"-"`
 
+	Name      string    `db:"name"       structs:"name"`
 	Balance   int       `db:"balance"    structs:"balance"`
 	UpdatedAt time.Time `db:"updated_at" structs:"-"`
 }

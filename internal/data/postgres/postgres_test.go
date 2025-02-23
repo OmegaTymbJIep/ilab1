@@ -45,6 +45,7 @@ func TestAccountsCRUD(t *testing.T) {
 
 	// Create an account
 	account := &data.Account{
+		Name:    "account1",
 		Balance: 1000,
 	}
 
@@ -131,6 +132,7 @@ func TestWithdrawalsCRUD(t *testing.T) {
 
 	// Create an account
 	account := &data.Account{
+		Name:    "account1",
 		Balance: 1000,
 	}
 
@@ -181,7 +183,10 @@ func TestDepositsCRUD(t *testing.T) {
 	accounts := db.Accounts()
 
 	// Create an account for deposit
-	account := &data.Account{Balance: 0}
+	account := &data.Account{
+		Name:    "account1",
+		Balance: 0,
+	}
 	err := accounts.Insert(account)
 	require.NoError(t, err)
 
@@ -218,8 +223,14 @@ func TestTransfersCRUD(t *testing.T) {
 	accounts := db.Accounts()
 
 	// Create sender and recipient accounts
-	sender := &data.Account{Balance: 1000}
-	recipient := &data.Account{Balance: 500}
+	sender := &data.Account{
+		Name:    "sender",
+		Balance: 1000,
+	}
+	recipient := &data.Account{
+		Name:    "recipient",
+		Balance: 500,
+	}
 
 	err := accounts.Insert(sender)
 	require.NoError(t, err)
@@ -269,7 +280,7 @@ func TestCustomersAccountsCRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an account
-	account := &data.Account{Balance: 1000}
+	account := &data.Account{Name: "account1", Balance: 1000}
 	err = accounts.Insert(account)
 	require.NoError(t, err)
 
@@ -313,7 +324,7 @@ func TestCustomerDeletionRestriction(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an account
-	account := &data.Account{Balance: 1000}
+	account := &data.Account{Name: "account1", Balance: 1000}
 	err = accounts.Insert(account)
 	require.NoError(t, err)
 
@@ -332,7 +343,7 @@ func TestTransactionCommit(t *testing.T) {
 
 	// Create an account inside a transaction
 	err := db.Transaction(func() error {
-		account := &data.Account{Balance: 500}
+		account := &data.Account{Name: "account1", Balance: 500}
 		err := accounts.Insert(account)
 		if err != nil {
 			return err
@@ -356,7 +367,7 @@ func TestTransactionRollback(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.Transaction(func() error {
-		account := &data.Account{Balance: 1000}
+		account := &data.Account{Name: "account1", Balance: 1000}
 		err = accounts.Insert(account)
 		if err != nil {
 			return err
