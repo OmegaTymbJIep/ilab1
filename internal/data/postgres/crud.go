@@ -38,7 +38,7 @@ func (r *crudQ[T, ID]) Insert(entity T) error {
 	return r.db.Get(entity.GetID(),
 		sq.Insert(r.tableName).
 			SetMap(entry).
-			Suffix(fmt.Sprintf("RETURNING %s", idColumnName)),
+			Suffix(fmt.Sprintf("RETURNING %s ", idColumnName)),
 	)
 }
 

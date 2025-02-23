@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Main Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .logout-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .logout-container button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .logout-container button:hover {
+            background-color: #c9302c;
+        }
+        .table-container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #333;
+            color: white;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+        .modal input {
+            width: 80%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .modal button, .create-btn {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .modal button:hover, .create-btn:hover {
+            background-color: #4cae4c;
+        }
+        .modal .cancel-btn {
+            background-color: #d9534f;
+        }
+        .modal .cancel-btn:hover {
+            background-color: #c9302c;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header .right-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .header button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .header button:hover {
+            background-color: #c9302c;
+        }
+        .info-modal, .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .info-modal-content {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            position: relative; /* Needed so child absolute positioning is relative to this container */
+            width: 260px;       /* Set a fixed or min width for the modal */
+            min-height: 200px;  /* Give enough vertical space */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            background-color: #fff;
+            text-align: left;
+        }
+        .header .right-buttons .info-modal-button {
+            background-color: #4f86d9;
+        }
+        .info-modal button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .info-modal button:hover {
+            background-color: #c9302c;
+        }
+        .info-modal-content .close-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Lab 1</h1>
+    <div class="right-buttons">
+        <button onclick="showInfoModal()" class="info-modal-button">Info</button>
+        <button onclick="logout()">Log Out</button>
+    </div>
+</div>
+
+<div id="modalOverlay" class="modal-overlay"></div>
+
+<div id="infoModal" class="info-modal">
+    <div class="info-modal-content">
+        <h2 style="text-align: center">Student Information</h2>
+        <p><strong>Name:</strong> Levochko Anton</p>
+        <p><strong>Group:</strong> K-25</p>
+        <p><strong>Date:</strong> 2025</p>
+        <button class="close-button" onclick="closeInfoModal()">Close</button>
+    </div>
+</div>
+
+<div id="modalOverlay" class="modal-overlay"></div>
+
+<div id="createAccountModal" class="modal">
+    <h2>Create New Account</h2>
+    <input type="text" id="accountName" placeholder="Enter account name">
+    <button onclick="createAccount()">Submit</button>
+    <button class="cancel-btn" onclick="closeCreateAccountModal()">Cancel</button>
+</div>
+
+<h2 style="text-align: left; padding: 20px 0 0 15%">Accounts</h2>
+<div class="table-container">
+    <table id="accountsTable">
+        <tr>
+            <th>Account ID</th>
+            <th>Name</th>
+            <th>Balance</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+        </tr>
+        {{if .Accounts}}
+        {{range .Accounts}}
+        <a href="/account/{{.ID}}"><tr>
+            <td>{{.ID}}</td>
+            <td>{{.Name}}</td>
+            <td>{{.Balance}}</td>
+            <td>{{.CreatedAt.Format "2006-01-02 15:04:05"}}</td>
+            <td>{{.UpdatedAt.Format "2006-01-02 15:04:05"}}</td>
+        </tr></a>
+        {{end}}
+        {{else}}
+        <tr>
+            <td colspan="5">No accounts to display.</td>
+        </tr>
+        {{end}}
+    </table>
+</div>
+
+<button class="create-btn" onclick="showCreateAccountModal()">Create Account</button>
+
+</body>
+
+<script>
+    function logout() {
+        window.location.href = "/logout";
+    }
+
+    function showInfoModal() {
+        document.getElementById("modalOverlay").style.display = "block";
+        document.getElementById("infoModal").style.display = "block";
+    }
+
+    function closeInfoModal() {
+        document.getElementById("modalOverlay").style.display = "none";
+        document.getElementById("infoModal").style.display = "none";
+    }
+
+    function showCreateAccountModal() {
+        document.getElementById("modalOverlay").style.display = "block";
+        document.getElementById("createAccountModal").style.display = "block";
+    }
+
+    function closeCreateAccountModal() {
+        document.getElementById("modalOverlay").style.display = "none";
+        document.getElementById("createAccountModal").style.display = "none";
+    }
+
+    function createAccount() {
+        let accountName = document.getElementById("accountName").value;
+        if (accountName.trim() === "") {
+            alert("Account name cannot be empty.");
+            return;
+        }
+
+        fetch("/create-account", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: accountName })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Server error: " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                let table = document.getElementById("accountsTable");
+                let newRow = table.insertRow(-1);
+                newRow.innerHTML = `<td>${data.id}</td><td>${data.name}</td><td>${data.balance}</td><td>${data.created_at}</td><td>${data.updated_at}</td>`;
+                closeCreateAccountModal();
+            })
+            .catch(error => {
+                alert("Error creating account: " + error.message);
+                console.error("Error creating account:", error);
+            });
+    }
+</script>
+</html>
