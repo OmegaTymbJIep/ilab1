@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"gitlab.com/distributed_lab/ape"
@@ -33,7 +34,7 @@ func (c *Auth) AuthPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	viewData := new(views.Auth)
-	if r.URL.Query().Get("redirected") == "true" {
+	if r.URL.Query().Get("unauthorized") == "true" {
 		viewData.Error = "Unauthorized"
 	}
 
@@ -61,8 +62,7 @@ func (c *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if errors.Is(err, models.ErrorInvalidPassword) {
-			Log(r).WithError(err).Debug("unauthorized")
-			ape.RenderErr(w, problems.Unauthorized())
+			Unauthorized(w, r, fmt.Errorf("invalid password"))
 			return
 		}
 
@@ -100,8 +100,16 @@ func (c *Auth) Register(w http.ResponseWriter, r *http.Request) {
 
 func Unauthorized(w http.ResponseWriter, r *http.Request, err error) {
 	Log(r).WithField("reason", err).Debug("unauthorized")
-	http.Redirect(w, r, "/auth?redirected=true", http.StatusSeeOther)
+	http.Redirect(w, r, "/auth?unauthorized=true", http.StatusSeeOther)
 	return
+}
+
+func LogOut(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, newJWTCookie(&models.JWTWithEat{
+		Token:      "",
+		Expiration: time.Now().Add(-time.Hour),
+	}))
+	http.Redirect(w, r, "/auth", http.StatusSeeOther)
 }
 
 func newJWTCookie(jwt *models.JWTWithEat) *http.Cookie {

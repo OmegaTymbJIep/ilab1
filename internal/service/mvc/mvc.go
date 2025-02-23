@@ -61,6 +61,7 @@ func (m *MVC) Register(r chi.Router) {
 		})
 
 		r.With(m.auth.VerifyJWT).Route("/", func(r chi.Router) {
+			r.Get("/logout", controllers.LogOut)
 			r.Get("/", m.main.MainPage)
 		})
 	})
