@@ -52,7 +52,7 @@
     <h2 id="form-title">Sign In</h2>
 
     <!-- Error message (if needed) -->
-    {{ if .Error }}<p class="error">{{ .Error }}</p>{{ end }}
+    {{ if .Error }}<p id="error-field" class="error">{{ .Error }}</p>{{ end }}
 
     <!-- Sign In Form -->
     <form id="login-form" action="/auth/login" method="POST" onsubmit="return hashPasswordLogin(event)">
@@ -119,6 +119,42 @@
             this.textContent = "Sign In";
         }
     });
+
+    async function submitAndAlert(form, event) {
+        event.preventDefault(); // Stop default submission
+
+        // Collect form data
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData
+            });
+
+            const errorField = document.getElementById('error-field');
+
+            if (response.status === 409) {
+                errorField.textContent = "Email or username already in use.";
+                return; // Stop here, don't submit
+            }
+
+            if (response.status === 400) {
+                errorField.textContent = "Email or username already in use.";
+                return;
+            }
+
+            // If we got here, no conflict => do whatever you want next
+            // For example, if you want to actually submit to the server in the traditional way:
+            form.submit();
+
+            // Or handle success purely via JavaScript, e.g.:
+            // const data = await response.json();
+            // doSomethingWith(data);
+        } catch (err) {
+            alert("Something went wrong: " + err.message);
+        }
+    }
 
     /************************************************
      * 2) PASSWORD STRENGTH METER FOR REGISTER FORM *
@@ -205,6 +241,8 @@
             return false;
         }
 
+        passwordEl.setAttribute("disabled", "true");
+
         try {
             // 1) keccak( plaintext_password + PUBLIC_SALT )
             const keccakInput = password + PUBLIC_SALT;
@@ -215,13 +253,15 @@
 
             // 3) Put final hash into hidden field, disable plaintext
             passwordHashEl.value = hash;
-            passwordEl.setAttribute("disabled", "true");
 
             // 4) Submit form
-            event.target.submit();
+            const form = document.getElementById('register-form');
+            submitAndAlert(event.target, event);
+            passwordEl.removeAttribute("disabled");
         } catch (err) {
             console.error("Error hashing password:", err);
             alert("Error hashing password. Check console for details.");
+            passwordEl.removeAttribute("disabled");
             return false;
         }
     }
@@ -252,7 +292,8 @@
         passwordEl.setAttribute("disabled", "true");
 
         // 3) Submit
-        event.target.submit();
+        submitAndAlert(event.target, event);
+        passwordEl.removeAttribute("disabled");
     }
 </script>
 
