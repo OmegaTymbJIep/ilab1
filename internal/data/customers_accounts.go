@@ -13,4 +13,6 @@ type CustomersAccounts interface {
 
 	GetCustomersByAccount(accountID uuid.UUID) ([]uuid.UUID, error)
 	GetAccountsByCustomer(customerID uuid.UUID) ([]uuid.UUID, error)
+
+	HasAccount(accountID uuid.UUID, customerID uuid.UUID) (bool, error)
 }

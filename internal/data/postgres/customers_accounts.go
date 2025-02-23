@@ -193,3 +193,20 @@ func (q *customersAccountsQ) GetAccountsByCustomer(customerID uuid.UUID) ([]uuid
 
 	return result, nil
 }
+
+func (q *customersAccountsQ) HasAccount(customerID, accountID uuid.UUID) (bool, error) {
+	var count int
+
+	if err := q.db.Get(&count,
+		sq.Select("COUNT(*)").
+			From(customersAccountsTableName).
+			Where(sq.Eq{
+				accountFkeyColumnName:  accountID,
+				customerFkeyColumnName: customerID,
+			}),
+	); err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
