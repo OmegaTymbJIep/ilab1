@@ -70,7 +70,7 @@ func TestVerifyJWT(t *testing.T) {
 	require.NoError(t, err, "failed to create valid JWT")
 
 	t.Run("valid token", func(t *testing.T) {
-		parsedID, err := auth.VerifyJWT(validToken)
+		parsedID, err := auth.VerifyJWT(validToken.Token)
 		require.NoError(t, err, "valid token should verify without error")
 		require.Equal(t, custID, parsedID, "parsed ID should match the original customer ID")
 	})
@@ -82,7 +82,7 @@ func TestVerifyJWT(t *testing.T) {
 
 	t.Run("signature changed / tampered token", func(t *testing.T) {
 		// Just remove the last character from the token or otherwise alter it
-		tampered := validToken[:len(validToken)-1] + "x"
+		tampered := validToken.Token[:len(validToken.Token)-1] + "x"
 		_, err := auth.VerifyJWT(tampered)
 		require.Error(t, err, "should fail with a tampered signature")
 	})
@@ -90,7 +90,7 @@ func TestVerifyJWT(t *testing.T) {
 	t.Run("expired token", func(t *testing.T) {
 		// Wait for the token to expire
 		time.Sleep(3 * time.Second)
-		_, err := auth.VerifyJWT(validToken)
+		_, err := auth.VerifyJWT(validToken.Token)
 		require.Error(t, err, "should fail when token is expired")
 		require.True(t, errors.Is(err, jwt.TokenExpiredError()), "expired token error expected")
 	})

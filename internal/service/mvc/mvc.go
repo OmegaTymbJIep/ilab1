@@ -3,7 +3,6 @@ package mvc
 import (
 	"fmt"
 	"html/template"
-	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"gitlab.com/distributed_lab/ape"
@@ -17,8 +16,10 @@ import (
 )
 
 type MVC struct {
-	log  *logan.Entry
+	log *logan.Entry
+
 	auth *controllers.Auth
+	main *controllers.Main
 
 	templates *template.Template
 }
@@ -39,6 +40,7 @@ func NewMVC(log *logan.Entry, cfg config.Config) (*MVC, error) {
 	return &MVC{
 		log:       log,
 		auth:      controllers.NewAuth(authModel),
+		main:      controllers.NewMain(models.NewMain(db)),
 		templates: templates,
 	}, nil
 }
@@ -59,9 +61,7 @@ func (m *MVC) Register(r chi.Router) {
 		})
 
 		r.With(m.auth.VerifyJWT).Route("/", func(r chi.Router) {
-			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				return
-			})
+			r.Get("/", m.main.MainPage)
 		})
 	})
 }
