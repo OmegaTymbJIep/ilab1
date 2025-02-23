@@ -14,6 +14,8 @@ import (
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/controllers/requests"
 )
 
+const customerIDJWTKey = "uid"
+
 var ErrorEmailOrUsernameTaken = fmt.Errorf("email or username is already taken")
 var ErrorUserNotFound = fmt.Errorf("user not found")
 var ErrorInvalidPassword = fmt.Errorf("invalid password")
@@ -23,9 +25,10 @@ type Auth struct {
 
 	jwtSigningKey   jwk.Key
 	jwtVerifyingKey jwk.Key
+	jwtExpiry       time.Duration
 }
 
-func NewAuth(db data.MainQ, jwtSigningKey jwk.Key) (*Auth, error) {
+func NewAuth(db data.MainQ, jwtSigningKey jwk.Key, jwtExpiry time.Duration) (*Auth, error) {
 	jwtVerifyingKey, err := jwtSigningKey.PublicKey()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get JWT public key: %w", err)
@@ -35,6 +38,7 @@ func NewAuth(db data.MainQ, jwtSigningKey jwk.Key) (*Auth, error) {
 		db:              db,
 		jwtSigningKey:   jwtSigningKey,
 		jwtVerifyingKey: jwtVerifyingKey,
+		jwtExpiry:       jwtExpiry,
 	}, nil
 }
 
@@ -55,7 +59,7 @@ func (a *Auth) Login(req *requests.Login) (string, error) {
 		return "", ErrorInvalidPassword
 	}
 
-	token, err := a.newUserJWT(customer.ID)
+	token, err := a.newCustomerJWT(customer.ID)
 	if err != nil {
 		return "", fmt.Errorf("failed to create JWT: %w", err)
 	}
@@ -93,7 +97,7 @@ func (a *Auth) Register(req *requests.Register) (string, error) {
 		return "", err
 	}
 
-	token, err := a.newUserJWT(customer.ID)
+	token, err := a.newCustomerJWT(customer.ID)
 	if err != nil {
 		return "", fmt.Errorf("failed to create JWT: %w", err)
 	}
@@ -101,11 +105,11 @@ func (a *Auth) Register(req *requests.Register) (string, error) {
 	return token, nil
 }
 
-func (a *Auth) newUserJWT(customerID uuid.UUID) (string, error) {
+func (a *Auth) newCustomerJWT(customerID uuid.UUID) (string, error) {
 	token, err := jwt.NewBuilder().
-		Claim("uid", customerID.String()).
-		Claim("exp", time.Now().Add(time.Hour*24).Unix()).
-		Claim("iat", time.Now().Unix()).
+		Claim(customerIDJWTKey, customerID.String()).
+		Claim(jwt.ExpirationKey, time.Now().Add(a.jwtExpiry).Unix()).
+		Claim(jwt.IssuedAtKey, time.Now().Unix()).
 		Build()
 	if err != nil {
 		return "", fmt.Errorf("failed to build token: %w", err)
@@ -117,4 +121,29 @@ func (a *Auth) newUserJWT(customerID uuid.UUID) (string, error) {
 	}
 
 	return string(signed), nil
+}
+
+func (a *Auth) VerifyJWT(token string) (uuid.UUID, error) {
+	parsedToken, err := jwt.Parse(
+		[]byte(token),
+		jwt.WithValidate(true),
+		jwt.WithKey(jwa.ES256(), a.jwtVerifyingKey),
+		jwt.WithClock(jwt.ClockFunc(time.Now)),
+		jwt.WithMaxDelta(a.jwtExpiry, jwt.ExpirationKey, jwt.IssuedAtKey),
+	)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to parse/validate token: %w", err)
+	}
+
+	var customerIDRaw string
+	if err = parsedToken.Get(customerIDJWTKey, &customerIDRaw); err != nil {
+		return uuid.Nil, fmt.Errorf("failed to get uid: %w", err)
+	}
+
+	customerID, err := uuid.Parse(customerIDRaw)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to parse uid: %w", err)
+	}
+
+	return customerID, nil
 }

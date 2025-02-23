@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	AuthTemplateName = "auth.html"
+	AuthTemplateName          = "auth.html"
+	InternalErrorTemplateName = "internal_error.html"
 )
 
 func ReadTemplates(templatesDir string) (*template.Template, error) {

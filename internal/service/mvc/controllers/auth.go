@@ -2,46 +2,44 @@ package controllers
 
 import (
 	"errors"
-	"html/template"
+	"fmt"
 	"net/http"
 
 	"gitlab.com/distributed_lab/ape"
 	"gitlab.com/distributed_lab/ape/problems"
-	"gitlab.com/distributed_lab/logan/v3"
 
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/controllers/requests"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/models"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/views"
 )
 
-type AuthController struct {
-	templates *template.Template
-	model     *models.Auth
-	log       *logan.Entry
+type Auth struct {
+	model *models.Auth
 }
 
-func NewAuthController(log *logan.Entry, model *models.Auth, templates *template.Template) *AuthController {
-	return &AuthController{
-		model:     model,
-		templates: templates,
-		log:       log.WithField("controller", "auth"),
+func NewAuth(model *models.Auth) *Auth {
+	return &Auth{
+		model: model,
 	}
 }
 
-func (c *AuthController) AuthPage(w http.ResponseWriter, _ *http.Request) {
-	if err := c.templates.ExecuteTemplate(w, views.AuthTemplateName, views.Auth{}); err != nil {
-		c.log.WithError(err).Error("failed to execute template")
+func (c *Auth) AuthPage(w http.ResponseWriter, r *http.Request) {
+	viewData := new(views.Auth)
+	if r.URL.Query().Get("redirected") == "true" {
+		viewData.Error = "Unauthorized"
+	}
+
+	if err := Templates(r).ExecuteTemplate(w, views.AuthTemplateName, viewData); err != nil {
+		Log(r).WithError(err).Error("failed to execute template")
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}
-
-	w.WriteHeader(http.StatusAccepted)
 }
 
-func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
+func (c *Auth) Login(w http.ResponseWriter, r *http.Request) {
 	req, err := requests.NewLogin(r)
 	if err != nil {
-		c.log.WithError(err).Debug("bad request")
+		Log(r).WithError(err).Debug("bad request")
 		ape.RenderErr(w, requests.BadRequest(err)...)
 		return
 	}
@@ -49,19 +47,18 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := c.model.Login(req)
 	if err != nil {
 		if errors.Is(err, models.ErrorUserNotFound) {
-			c.log.WithError(err).Debug("not found")
+			Log(r).WithError(err).Debug("not found")
 			ape.RenderErr(w, problems.NotFound())
 			return
 		}
 
 		if errors.Is(err, models.ErrorInvalidPassword) {
-			c.log.WithError(err).Debug("unauthorized")
+			Log(r).WithError(err).Debug("unauthorized")
 			ape.RenderErr(w, problems.Unauthorized())
 			return
 		}
 
-		c.log.WithError(err).Error("failed to login user")
-		ape.RenderErr(w, problems.InternalError())
+		InternalError(w, r, fmt.Errorf("failed to login user: %w", err))
 		return
 	}
 
@@ -69,10 +66,10 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	ape.Render(w, token)
 }
 
-func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
+func (c *Auth) Register(w http.ResponseWriter, r *http.Request) {
 	req, err := requests.NewRegister(r)
 	if err != nil {
-		c.log.WithError(err).Debug("bad request")
+		Log(r).WithError(err).Debug("bad request")
 		ape.RenderErr(w, requests.BadRequest(err)...)
 		return
 	}
@@ -80,16 +77,21 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	jwt, err := c.model.Register(req)
 	if err != nil {
 		if errors.Is(err, models.ErrorEmailOrUsernameTaken) {
-			c.log.WithField("reason", err).Debug("conflict")
+			Log(r).WithField("reason", err).Debug("conflict")
 			ape.RenderErr(w, problems.Conflict())
 			return
 		}
 
-		c.log.WithError(err).Error("failed to register new user")
-		ape.RenderErr(w, problems.InternalError())
+		InternalError(w, r, err)
 		return
 	}
 
 	// TODO: render response here
 	ape.Render(w, jwt)
+}
+
+func Unauthorized(w http.ResponseWriter, r *http.Request, err error) {
+	Log(r).WithField("reason", err).Debug("unauthorized")
+	http.Redirect(w, r, "/auth?redirected=true", http.StatusSeeOther)
+	return
 }

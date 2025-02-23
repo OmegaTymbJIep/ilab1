@@ -2,8 +2,11 @@ package mvc
 
 import (
 	"fmt"
+	"html/template"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"gitlab.com/distributed_lab/ape"
 	"gitlab.com/distributed_lab/logan/v3"
 
 	"github.com/omegatymbjiep/ilab1/internal/config"
@@ -15,7 +18,9 @@ import (
 
 type MVC struct {
 	log  *logan.Entry
-	auth *controllers.AuthController
+	auth *controllers.Auth
+
+	templates *template.Template
 }
 
 func NewMVC(log *logan.Entry, cfg config.Config) (*MVC, error) {
@@ -26,27 +31,38 @@ func NewMVC(log *logan.Entry, cfg config.Config) (*MVC, error) {
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
 
-	authModel, err := models.NewAuth(db, cfg.JWT().SigningKey)
+	authModel, err := models.NewAuth(db, cfg.JWT().SigningKey, cfg.JWT().Expiry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init auth model: %w", err)
 	}
 
 	return &MVC{
-		log:  log,
-		auth: controllers.NewAuthController(log, authModel, templates),
+		log:       log,
+		auth:      controllers.NewAuth(authModel),
+		templates: templates,
 	}, nil
 }
 
 func (m *MVC) Register(r chi.Router) {
 	r.Group(func(r chi.Router) {
+		r.Use(
+			ape.CtxMiddleware(
+				controllers.CtxLog(m.log),
+				controllers.CtxTemplates(m.templates),
+			),
+		)
+
 		r.Route("/auth", func(r chi.Router) {
 			r.Get("/", m.auth.AuthPage)
 			r.Post("/login", m.auth.Login)
 			r.Post("/register", m.auth.Register)
 		})
 
-		//r.With(jwtx).Route("/dashboard", func(r chi.Router) {
-		//
-		//})
+		r.With(m.auth.VerifyJWT).Route("/dashboard", func(r chi.Router) {
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("dashboard"))
+				return
+			})
+		})
 	})
 }

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"gitlab.com/distributed_lab/figure/v3"
@@ -10,11 +11,13 @@ import (
 )
 
 type JWT struct {
-	SigningKey jwk.Key `fig:"signing_key,required"`
+	SigningKey jwk.Key
+	Expiry     time.Duration
 }
 
 type jwt struct {
 	SigningKeyPath string `fig:"signing_key_path,required"`
+	Expiry         string `fig:"expiry,required"`
 }
 
 func (c *config) JWT() *JWT {
@@ -39,8 +42,14 @@ func (c *config) JWT() *JWT {
 			panic(fmt.Errorf("failed to parse JWT signing key: %w", err))
 		}
 
+		expiry, err := time.ParseDuration(cfg.Expiry)
+		if err != nil {
+			panic(fmt.Errorf("failed to parse JWT expiry: %w", err))
+		}
+
 		return &JWT{
 			SigningKey: signingKey,
+			Expiry:     expiry,
 		}
 	}).(*JWT)
 }
