@@ -58,9 +58,8 @@ func (m *MVC) Register(r chi.Router) {
 			r.Post("/register", m.auth.Register)
 		})
 
-		r.With(m.auth.VerifyJWT).Route("/dashboard", func(r chi.Router) {
+		r.With(m.auth.VerifyJWT).Route("/", func(r chi.Router) {
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("dashboard"))
 				return
 			})
 		})

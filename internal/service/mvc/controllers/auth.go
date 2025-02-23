@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"gitlab.com/distributed_lab/ape"
 	"gitlab.com/distributed_lab/ape/problems"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/models"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/views"
 )
+
+const JWTCookieName = "jwt"
 
 type Auth struct {
 	model *models.Auth
@@ -24,6 +27,11 @@ func NewAuth(model *models.Auth) *Auth {
 }
 
 func (c *Auth) AuthPage(w http.ResponseWriter, r *http.Request) {
+	if customerID, _ := c.verifyJWT(r); customerID != uuid.Nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
 	viewData := new(views.Auth)
 	if r.URL.Query().Get("redirected") == "true" {
 		viewData.Error = "Unauthorized"
@@ -44,7 +52,7 @@ func (c *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := c.model.Login(req)
+	jwt, err := c.model.Login(req)
 	if err != nil {
 		if errors.Is(err, models.ErrorUserNotFound) {
 			Log(r).WithError(err).Debug("not found")
@@ -62,8 +70,8 @@ func (c *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: render response here
-	ape.Render(w, token)
+	http.SetCookie(w, newJWTCookie(jwt))
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (c *Auth) Register(w http.ResponseWriter, r *http.Request) {
@@ -86,12 +94,23 @@ func (c *Auth) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: render response here
-	ape.Render(w, jwt)
+	http.SetCookie(w, newJWTCookie(jwt))
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func Unauthorized(w http.ResponseWriter, r *http.Request, err error) {
 	Log(r).WithField("reason", err).Debug("unauthorized")
 	http.Redirect(w, r, "/auth?redirected=true", http.StatusSeeOther)
 	return
+}
+
+func newJWTCookie(jwt *models.JWTWithEat) *http.Cookie {
+	return &http.Cookie{
+		Name:     JWTCookieName,
+		Value:    jwt.Token,
+		Secure:   false,
+		HttpOnly: true,
+		Expires:  jwt.Expiration,
+		Path:     "/",
+	}
 }

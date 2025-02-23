@@ -20,6 +20,11 @@ var ErrorEmailOrUsernameTaken = fmt.Errorf("email or username is already taken")
 var ErrorUserNotFound = fmt.Errorf("user not found")
 var ErrorInvalidPassword = fmt.Errorf("invalid password")
 
+type JWTWithEat struct {
+	Token      string
+	Expiration time.Time
+}
+
 type Auth struct {
 	db data.MainQ
 
@@ -42,32 +47,32 @@ func NewAuth(db data.MainQ, jwtSigningKey jwk.Key, jwtExpiry time.Duration) (*Au
 	}, nil
 }
 
-func (a *Auth) Login(req *requests.Login) (string, error) {
+func (a *Auth) Login(req *requests.Login) (*JWTWithEat, error) {
 	customers := a.db.Customers()
 
 	customer := new(data.Customer)
 	ok, err := customers.WhereEmail(req.Email).Get(customer)
 	if err != nil {
-		return "", fmt.Errorf("failed to get customer: %w", err)
+		return nil, fmt.Errorf("failed to get customer: %w", err)
 	}
 
 	if !ok {
-		return "", ErrorUserNotFound
+		return nil, ErrorUserNotFound
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(customer.PasswordHash), []byte(req.Password)) != nil {
-		return "", ErrorInvalidPassword
+		return nil, ErrorInvalidPassword
 	}
 
 	token, err := a.newCustomerJWT(customer.ID)
 	if err != nil {
-		return "", fmt.Errorf("failed to create JWT: %w", err)
+		return nil, fmt.Errorf("failed to create JWT: %w", err)
 	}
 
 	return token, nil
 }
 
-func (a *Auth) Register(req *requests.Register) (string, error) {
+func (a *Auth) Register(req *requests.Register) (*JWTWithEat, error) {
 	customers := a.db.Customers()
 
 	customer := &data.Customer{
@@ -94,33 +99,38 @@ func (a *Auth) Register(req *requests.Register) (string, error) {
 
 		return nil
 	}); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	token, err := a.newCustomerJWT(customer.ID)
 	if err != nil {
-		return "", fmt.Errorf("failed to create JWT: %w", err)
+		return nil, fmt.Errorf("failed to create JWT: %w", err)
 	}
 
 	return token, nil
 }
 
-func (a *Auth) newCustomerJWT(customerID uuid.UUID) (string, error) {
+func (a *Auth) newCustomerJWT(customerID uuid.UUID) (*JWTWithEat, error) {
+	eat := time.Now().Add(a.jwtExpiry)
+
 	token, err := jwt.NewBuilder().
 		Claim(customerIDJWTKey, customerID.String()).
-		Claim(jwt.ExpirationKey, time.Now().Add(a.jwtExpiry).Unix()).
+		Claim(jwt.ExpirationKey, eat.Unix()).
 		Claim(jwt.IssuedAtKey, time.Now().Unix()).
 		Build()
 	if err != nil {
-		return "", fmt.Errorf("failed to build token: %w", err)
+		return nil, fmt.Errorf("failed to build token: %w", err)
 	}
 
 	signed, err := jwt.Sign(token, jwt.WithKey(jwa.ES256(), a.jwtSigningKey))
 	if err != nil {
-		return "", fmt.Errorf("failed to sign token: %w", err)
+		return nil, fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	return string(signed), nil
+	return &JWTWithEat{
+		Token:      string(signed),
+		Expiration: eat,
+	}, nil
 }
 
 func (a *Auth) VerifyJWT(token string) (uuid.UUID, error) {
