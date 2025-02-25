@@ -44,15 +44,72 @@
             background: #ccc; display: block; margin: 0px auto;
             width: 90%; height: 3px; border: 0px solid #ccc;
         }
+
+        /* alerts.css */
+        /* Base styles for the alert container and alerts */
+        #alert-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .alert {
+            position: relative;
+            min-width: 200px;
+            padding: 15px 20px 20px 20px; /* Extra bottom padding for the timeline */
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            opacity: 1;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            overflow: hidden;
+        }
+        .alert.note {
+            background-color: #e7f3fe;
+            border-left: 5px solid #2196F3;
+            color: #333;
+        }
+        .alert.error {
+            background-color: #f8d7da;
+            border-left: 5px solid #f44336;
+            color: #721c24;
+        }
+        .alert .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: inherit;
+            width: 100%;
+            height: 100%;
+        }
+        .alert .alert-timeline {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background-color: rgba(0,0,0,0.2);
+            width: 100%;
+            transition-property: width;
+            transition-timing-function: linear;
+        }
+
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 id="form-title">Sign In</h2>
+    <!-- Container for alert pop-ups -->
+    <div id="alert-container"></div>
 
-    <!-- Error message (if needed) -->
-    {{ if .Error }}<p id="error-field" class="error">{{ .Error }}</p>{{ end }}
+    <h2 id="form-title">Sign In</h2>
 
     <!-- Sign In Form -->
     <form id="login-form" action="/auth/login" method="POST" onsubmit="return hashPasswordLogin(event)">
@@ -129,30 +186,31 @@
         try {
             const response = await fetch(form.action, {
                 method: form.method,
-                body: formData
+                body: formData,
             });
 
-            const errorField = document.getElementById('error-field');
+            // Handle redirection manually
+            if (response.status === 200) {
+                window.location.href = response.url;; // Manually navigate
+            }
 
             if (response.status === 409) {
-                errorField.textContent = "Email or username already in use.";
+                showAlert("Email or username already in use.", type = 'error')
                 return; // Stop here, don't submit
             }
 
-            if (response.status === 400) {
-                errorField.textContent = "Email or username already in use.";
+            if (response.status === 404) {
+                showAlert("User with such email not found.", type = 'error')
                 return;
             }
 
-            // If we got here, no conflict => do whatever you want next
-            // For example, if you want to actually submit to the server in the traditional way:
-            form.submit();
-
-            // Or handle success purely via JavaScript, e.g.:
-            // const data = await response.json();
-            // doSomethingWith(data);
+            if (response.status === 400) {
+                showAlert("Email or username already in use.", type = 'error')
+                return;
+            }
         } catch (err) {
-            alert("Something went wrong: " + err.message);
+            showAlert("Something went wrong", type = 'error')
+            console.log("Error submitting form: ", err);
         }
     }
 
@@ -294,6 +352,53 @@
         // 3) Submit
         submitAndAlert(event.target, event);
         passwordEl.removeAttribute("disabled");
+    }
+
+    function showAlert(message, type = 'note', duration = 3000) {
+        // Create the alert element
+        const alertEl = document.createElement('div');
+        alertEl.classList.add('alert', type);
+
+        // Create the message element
+        const messageEl = document.createElement('span');
+        messageEl.innerHTML = message;
+        alertEl.appendChild(messageEl);
+
+        // Create the close button
+        const closeBtn = document.createElement('button');
+        closeBtn.classList.add('close-btn');
+        closeBtn.onclick = () => removeAlert(alertEl);
+        alertEl.appendChild(closeBtn);
+
+        // Create the timeline element inside the alert
+        const timelineEl = document.createElement('div');
+        timelineEl.classList.add('alert-timeline');
+        // Set transition duration to match the alert duration
+        timelineEl.style.transitionDuration = duration + 'ms';
+        alertEl.appendChild(timelineEl);
+
+        // Append the alert to the container (stackable)
+        document.getElementById('alert-container').appendChild(alertEl);
+
+        // Force a reflow and then start the timeline animation
+        timelineEl.offsetWidth; // trigger reflow
+        timelineEl.style.width = '0%';
+
+        // Auto-remove the alert after the specified duration
+        if (duration > 0) {
+            setTimeout(() => removeAlert(alertEl), duration);
+        }
+    }
+
+    // Function to remove an alert with a fade-out effect
+    function removeAlert(alertEl) {
+        alertEl.style.opacity = '0';
+        alertEl.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (alertEl.parentNode) {
+                alertEl.parentNode.removeChild(alertEl);
+            }
+        }, 500); // This timeout matches the CSS transition duration
     }
 </script>
 

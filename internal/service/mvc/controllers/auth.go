@@ -33,12 +33,7 @@ func (c *Auth) AuthPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	viewData := new(views.Auth)
-	if r.URL.Query().Get("unauthorized") == "true" {
-		viewData.Error = "Unauthorized"
-	}
-
-	if err := Templates(r).ExecuteTemplate(w, views.AuthTemplateName, viewData); err != nil {
+	if err := Templates(r).ExecuteTemplate(w, views.AuthTemplateName, nil); err != nil {
 		Log(r).WithError(err).Error("failed to execute template")
 		ape.RenderErr(w, problems.InternalError())
 		return
@@ -100,7 +95,7 @@ func (c *Auth) Register(w http.ResponseWriter, r *http.Request) {
 
 func Unauthorized(w http.ResponseWriter, r *http.Request, err error) {
 	Log(r).WithField("reason", err).Debug("unauthorized")
-	http.Redirect(w, r, "/auth?unauthorized=true", http.StatusSeeOther)
+	http.Redirect(w, r, "/auth", http.StatusSeeOther)
 	return
 }
 
