@@ -9,9 +9,7 @@ type MainQ interface {
 	Customers() Customers
 	Accounts() Accounts
 	CustomersAccounts() CustomersAccounts
-	Withdrawals() Withdrawals
-	Deposits() Deposits
-	Transfers() Transfers
+	Transactions() Transactions
 
 	Transaction(func() error) error
 	IsolatedTransaction(sql.IsolationLevel, func() error) error

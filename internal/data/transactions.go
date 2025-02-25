@@ -1,32 +1,49 @@
 package data
 
 import (
-	"time"
+	"github.com/google/uuid"
 )
 
-type TransactionType byte
+type TransactionType int
 
 const (
-	DepositTransaction    TransactionType = 0x0
-	TransferTransaction   TransactionType = 0x1
-	WithdrawalTransaction TransactionType = 0x2
+	DepositTransaction TransactionType = iota
+	WithdrawalTransaction
+	TransferTransaction
 )
 
 func (t TransactionType) String() string {
 	switch t {
 	case DepositTransaction:
 		return "deposit"
-	case TransferTransaction:
-		return "transfer"
 	case WithdrawalTransaction:
 		return "withdrawal"
+	case TransferTransaction:
+		return "transfer"
 	default:
 		return "unknown"
 	}
 }
 
-type Transaction interface {
-	GetType() TransactionType
-	GetAmount() uint
-	GetCreatedAt() time.Time
+type Transactions interface {
+	CRUDQ[*Transaction, uuid.UUID]
+
+	WhereType(TransactionType) Transactions
+	WhereSender(sender uuid.UUID) Transactions
+	WhereRecipient(recipient uuid.UUID) Transactions
+	WhereAccount(account uuid.UUID) Transactions
+
+	Limit(limit uint64) Transactions
+	Offset(offset uint64) Transactions
+	OrderBy(orderBy ...string) Transactions
+}
+
+type Transaction struct {
+	Entity[uuid.UUID] `structs:"-"`
+
+	Type         TransactionType `db:"type"           structs:"type"`
+	Amount       uint            `db:"amount"         structs:"amount"`
+	Sender       uuid.UUID       `db:"sender_fkey"    structs:"sender_fkey"`
+	Recipient    uuid.UUID       `db:"recipient_fkey" structs:"recipient_fkey"`
+	ATMSignature string          `db:"atm_signature"  structs:"atm_signature"`
 }

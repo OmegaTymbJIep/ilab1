@@ -3,6 +3,7 @@ package postgres
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,104 +126,12 @@ func TestCustomersCRUD(t *testing.T) {
 	assert.False(t, ok, "deleted customer still exists")
 }
 
-func TestWithdrawalsCRUD(t *testing.T) {
+func TestTransactionsCRUD(t *testing.T) {
 	db := newTestMainQ(t)
-	withdrawals := db.Withdrawals()
+	transactions := db.Transactions()
 	accounts := db.Accounts()
 
-	// Create an account
-	account := &data.Account{
-		Name:    "account1",
-		Balance: 1000,
-	}
-
-	err := accounts.Insert(account)
-	require.NoError(t, err)
-
-	// Create a withdrawal
-	withdrawal := &data.Withdrawal{
-		Sender: account.ID,
-		Amount: 500,
-	}
-	err = withdrawals.Insert(withdrawal)
-	require.NoError(t, err)
-
-	// Retrieve the withdrawal by ID
-	fetched := new(data.Withdrawal)
-	ok, err := withdrawals.WhereSender(withdrawal.Sender).Get(fetched)
-	require.NoError(t, err)
-	require.True(t, ok, "inserted withdrawal not found")
-	assert.Equal(t, withdrawal.Amount, fetched.Amount)
-
-	// Update the withdrawal amount
-	withdrawal.Amount = 1000
-	err = withdrawals.Update(withdrawal)
-	require.NoError(t, err)
-
-	// Verify the update
-	updated := new(data.Withdrawal)
-	ok, err = withdrawals.WhereSender(withdrawal.Sender).Get(updated)
-	require.NoError(t, err)
-	require.True(t, ok, "updated withdrawal not found")
-	assert.Equal(t, uint(1000), updated.Amount)
-
-	// Delete the withdrawal
-	err = withdrawals.Delete(withdrawal.ID)
-	require.NoError(t, err)
-
-	// Verify deletion
-	deleted := new(data.Withdrawal)
-	ok, err = withdrawals.WhereSender(withdrawal.Sender).Get(deleted)
-	require.NoError(t, err)
-	assert.False(t, ok, "deleted withdrawal still exists")
-}
-
-func TestDepositsCRUD(t *testing.T) {
-	db := newTestMainQ(t)
-	deposits := db.Deposits()
-	accounts := db.Accounts()
-
-	// Create an account for deposit
-	account := &data.Account{
-		Name:    "account1",
-		Balance: 0,
-	}
-	err := accounts.Insert(account)
-	require.NoError(t, err)
-
-	// Create a deposit
-	deposit := &data.Deposit{
-		Recepient:    account.ID,
-		ATMSignature: "test_signature",
-		Amount:       500,
-	}
-	err = deposits.Insert(deposit)
-	require.NoError(t, err)
-
-	// Retrieve the deposit
-	fetched := new(data.Deposit)
-	ok, err := deposits.WhereRecepient(deposit.Recepient).Get(fetched)
-	require.NoError(t, err)
-	require.True(t, ok, "inserted deposit not found")
-	assert.Equal(t, deposit.Amount, fetched.Amount)
-
-	// Delete the deposit
-	err = deposits.Delete(deposit.ID)
-	require.NoError(t, err)
-
-	// Verify deletion
-	deleted := new(data.Deposit)
-	ok, err = deposits.WhereRecepient(deposit.Recepient).Get(deleted)
-	require.NoError(t, err)
-	assert.False(t, ok, "deleted deposit still exists")
-}
-
-func TestTransfersCRUD(t *testing.T) {
-	db := newTestMainQ(t)
-	transfers := db.Transfers()
-	accounts := db.Accounts()
-
-	// Create sender and recipient accounts
+	// Create sender and recipient accounts.
 	sender := &data.Account{
 		Name:    "sender",
 		Balance: 1000,
@@ -231,37 +140,214 @@ func TestTransfersCRUD(t *testing.T) {
 		Name:    "recipient",
 		Balance: 500,
 	}
-
 	err := accounts.Insert(sender)
 	require.NoError(t, err)
 	err = accounts.Insert(recipient)
 	require.NoError(t, err)
 
-	// Create a transfer
-	transfer := &data.Transfer{
+	// Insert a valid transfer transaction (both sender and recipient must be non-nil).
+	txn := &data.Transaction{
+		Type:      data.TransferTransaction,
+		Amount:    300,
 		Sender:    sender.ID,
-		Recepient: recipient.ID,
-		Amount:    200,
+		Recipient: recipient.ID,
 	}
-	err = transfers.Insert(transfer)
+	err = transactions.Insert(txn)
 	require.NoError(t, err)
 
-	// Retrieve the transfer
-	fetched := new(data.Transfer)
-	ok, err := transfers.WhereSender(transfer.Sender).Get(fetched)
+	// Retrieve the transaction using a filter (by sender).
+	fetched := new(data.Transaction)
+	ok, err := transactions.WhereSender(txn.Sender).Get(fetched)
 	require.NoError(t, err)
-	require.True(t, ok, "inserted transfer not found")
-	assert.Equal(t, transfer.Amount, fetched.Amount)
+	require.True(t, ok, "inserted transaction not found")
+	assert.Equal(t, txn.Amount, fetched.Amount)
+	assert.Equal(t, txn.Type, fetched.Type)
 
-	// Delete the transfer
-	err = transfers.Delete(transfer.ID)
+	// Update the transaction amount.
+	txn.Amount = 350
+	err = transactions.Update(txn)
 	require.NoError(t, err)
 
-	// Verify deletion
-	deleted := new(data.Transfer)
-	ok, err = transfers.WhereSender(transfer.Sender).Get(deleted)
+	// Verify the update.
+	updated := new(data.Transaction)
+	ok, err = transactions.WhereSender(txn.Sender).Get(updated)
 	require.NoError(t, err)
-	assert.False(t, ok, "deleted transfer still exists")
+	require.True(t, ok, "updated transaction not found")
+	assert.Equal(t, uint(350), updated.Amount)
+
+	// Delete the transaction.
+	err = transactions.Delete(txn.ID)
+	require.NoError(t, err)
+
+	// Verify deletion.
+	deleted := new(data.Transaction)
+	ok, err = transactions.WhereSender(txn.Sender).Get(deleted)
+	require.NoError(t, err)
+	assert.False(t, ok, "deleted transaction still exists")
+}
+
+func TestInvalidDeposit(t *testing.T) {
+	db := newTestMainQ(t)
+	transactions := db.Transactions()
+	accounts := db.Accounts()
+
+	// Create a valid recipient account.
+	recipient := &data.Account{
+		Name:    "recipient_invalid_deposit",
+		Balance: 500,
+	}
+	err := accounts.Insert(recipient)
+	require.NoError(t, err)
+
+	// Try to create a deposit with a non-nil sender.
+	txnDeposit := &data.Transaction{
+		Type:         data.DepositTransaction,
+		Amount:       200,
+		Sender:       uuid.New(), // Invalid: sender should be nil for deposits.
+		Recipient:    recipient.ID,
+		ATMSignature: "invalid_deposit",
+	}
+	err = transactions.Insert(txnDeposit)
+	require.Error(t, err, "expected error when inserting deposit with non-null sender")
+}
+
+func TestInvalidWithdrawal(t *testing.T) {
+	db := newTestMainQ(t)
+	transactions := db.Transactions()
+	accounts := db.Accounts()
+
+	// Create a valid sender account.
+	sender := &data.Account{
+		Name:    "sender_invalid_withdrawal",
+		Balance: 1000,
+	}
+	err := accounts.Insert(sender)
+	require.NoError(t, err)
+
+	// Try to create a withdrawal with a non-nil recipient.
+	txnWithdrawal := &data.Transaction{
+		Type:         data.WithdrawalTransaction,
+		Amount:       100,
+		Sender:       sender.ID,
+		Recipient:    uuid.New(), // Invalid: recipient should be nil for withdrawals.
+		ATMSignature: "invalid_withdrawal",
+	}
+	err = transactions.Insert(txnWithdrawal)
+	require.Error(t, err, "expected error when inserting withdrawal with non-null recipient")
+}
+
+func TestInvalidTransfer(t *testing.T) {
+	db := newTestMainQ(t)
+	transactions := db.Transactions()
+	accounts := db.Accounts()
+
+	// Create valid accounts for sender and recipient.
+	sender := &data.Account{
+		Name:    "sender_invalid_transfer",
+		Balance: 1000,
+	}
+	recipient := &data.Account{
+		Name:    "recipient_invalid_transfer",
+		Balance: 500,
+	}
+	err := accounts.Insert(sender)
+	require.NoError(t, err)
+	err = accounts.Insert(recipient)
+	require.NoError(t, err)
+
+	// Try to create a transfer with a missing recipient (recipient nil).
+	txnTransferMissingRecipient := &data.Transaction{
+		Type:      data.TransferTransaction,
+		Amount:    300,
+		Sender:    sender.ID,
+		Recipient: uuid.Nil, // Invalid: transfer must have a non-nil recipient.
+	}
+	err = transactions.Insert(txnTransferMissingRecipient)
+	require.Error(t, err, "expected error when inserting transfer with missing recipient")
+
+	// Also try a transfer with a missing sender.
+	txnTransferMissingSender := &data.Transaction{
+		Type:      data.TransferTransaction,
+		Amount:    300,
+		Sender:    uuid.Nil, // Invalid: transfer must have a non-nil sender.
+		Recipient: recipient.ID,
+	}
+	err = transactions.Insert(txnTransferMissingSender)
+	require.Error(t, err, "expected error when inserting transfer with missing sender")
+}
+
+func TestTransactionsFilters(t *testing.T) {
+	db := newTestMainQ(t)
+	transactions := db.Transactions()
+	accounts := db.Accounts()
+
+	// Create two accounts.
+	account1 := &data.Account{
+		Name:    "account1",
+		Balance: 1000,
+	}
+	account2 := &data.Account{
+		Name:    "account2",
+		Balance: 500,
+	}
+	err := accounts.Insert(account1)
+	require.NoError(t, err)
+	err = accounts.Insert(account2)
+	require.NoError(t, err)
+
+	// Insert a valid deposit: for a deposit, sender must be nil (uuid.Nil) and recipient non-nil.
+	txnDeposit := &data.Transaction{
+		Type:   data.DepositTransaction,
+		Amount: 200,
+		// Sender is omitted (zero value, uuid.Nil) to represent SQL NULL.
+		Recipient:    account1.ID,
+		ATMSignature: "deposit_signature",
+	}
+	err = transactions.Insert(txnDeposit)
+	require.NoError(t, err)
+
+	// Insert a valid withdrawal: for a withdrawal, recipient must be nil (uuid.Nil) and sender non-nil.
+	txnWithdrawal := &data.Transaction{
+		Type:   data.WithdrawalTransaction,
+		Amount: 100,
+		Sender: account1.ID,
+		// Recipient is omitted (zero value) to represent SQL NULL.
+	}
+	err = transactions.Insert(txnWithdrawal)
+	require.NoError(t, err)
+
+	// Insert a valid transfer: both sender and recipient must be non-nil.
+	txnTransfer := &data.Transaction{
+		Type:         data.TransferTransaction,
+		Amount:       300,
+		Sender:       account1.ID,
+		Recipient:    account2.ID,
+		ATMSignature: "transfer_signature",
+	}
+	err = transactions.Insert(txnTransfer)
+	require.NoError(t, err)
+
+	// Test filtering by transaction type.
+	depositTxns, err := transactions.WhereType(data.DepositTransaction).Select()
+	require.NoError(t, err)
+	assert.NotEmpty(t, depositTxns, "expected at least one deposit transaction")
+
+	// Test filtering by sender: account1 should appear in both withdrawal and transfer.
+	senderTxns, err := transactions.WhereSender(account1.ID).Select()
+	require.NoError(t, err)
+	// Deposit should not be returned since its sender is nil.
+	assert.GreaterOrEqual(t, len(senderTxns), 2, "expected at least two transactions with account1 as sender")
+
+	// Test filtering by recipient: account2 should appear in the transfer transaction.
+	recipientTxns, err := transactions.WhereRecipient(account2.ID).Select()
+	require.NoError(t, err)
+	assert.Len(t, recipientTxns, 1, "expected exactly one transaction with account2 as recipient")
+
+	// Test filtering by account: WhereAccount should return transactions where account1 is either sender or recipient.
+	accountTxns, err := transactions.WhereAccount(account1.ID).Select()
+	require.NoError(t, err)
+	// account1 is recipient in the deposit and sender in the withdrawal and transfer.
+	assert.GreaterOrEqual(t, len(accountTxns), 3, "expected at least three transactions involving account1")
 }
 
 func TestCustomersAccountsCRUD(t *testing.T) {

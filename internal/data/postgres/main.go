@@ -30,16 +30,8 @@ func (q *mainQ) CustomersAccounts() data.CustomersAccounts {
 	return NewCustomersAccountsQ(q.db)
 }
 
-func (q *mainQ) Deposits() data.Deposits {
-	return NewDepositsQ(q.db)
-}
-
-func (q *mainQ) Withdrawals() data.Withdrawals {
-	return NewWithdrawalsQ(q.db)
-}
-
-func (q *mainQ) Transfers() data.Transfers {
-	return NewTransfersQ(q.db)
+func (q *mainQ) Transactions() data.Transactions {
+	return NewTransactionsQ(q.db)
 }
 
 func (q *mainQ) Transaction(fn func() error) error {

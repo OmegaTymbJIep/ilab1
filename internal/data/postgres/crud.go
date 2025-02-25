@@ -12,7 +12,10 @@ import (
 	"github.com/omegatymbjiep/ilab1/internal/data"
 )
 
-const idColumnName = "id"
+const (
+	idColumnName       = "id"
+	createAtColumnName = "created_at"
+)
 
 // crudQ handles common CRUD operations
 type crudQ[T data.IEntity[ID], ID comparable] struct {
@@ -27,8 +30,12 @@ func newCRUDQ[T data.IEntity[ID], ID comparable](db *pgdb.DB, tableName string) 
 	return &crudQ[T, ID]{
 		db:        db,
 		tableName: tableName,
-		sel:       sq.Select("*").From(tableName),
+		sel:       emptySelector(tableName),
 	}
+}
+
+func emptySelector(tableName string) sq.SelectBuilder {
+	return sq.Select("*").From(tableName)
 }
 
 // Insert adds a new record to the table
@@ -73,6 +80,8 @@ func (r *crudQ[T, ID]) Select() (result []T, err error) {
 
 		return nil, err
 	}
+
+	r.sel = emptySelector(r.tableName)
 
 	return result, nil
 }
