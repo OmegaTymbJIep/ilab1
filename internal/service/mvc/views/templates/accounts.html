@@ -11,102 +11,18 @@
             padding: 20px;
             text-align: center;
         }
-        .logout-container {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
-        .logout-container button {
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
-        }
-        .logout-container button:hover {
-            background-color: #c9302c;
-        }
-        .table-container {
-            width: 80%;
-            margin: 20px auto;
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #333;
-            color: white;
-        }
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-        }
-        .modal input {
-            width: 80%;
-            padding: 8px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .modal button, .create-btn {
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
-            margin: 5px;
-        }
-        .modal button:hover, .create-btn:hover {
-            background-color: #4cae4c;
-        }
-        .modal .cancel-btn {
-            background-color: #d9534f;
-        }
-        .modal .cancel-btn:hover {
-            background-color: #c9302c;
-        }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #333;
-            color: white;
-            padding: 15px 20px;
+            background-color: #fff;
+            color: black;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         .header h1 {
-            margin: 0;
+            margin: 0 0 0 0;
             font-size: 24px;
         }
         .header .right-buttons {
@@ -114,7 +30,7 @@
             gap: 10px;
         }
         .header button {
-            background-color: #d9534f;
+            background-color: #f44336;
             color: white;
             border: none;
             padding: 10px 15px;
@@ -125,6 +41,68 @@
         .header button:hover {
             background-color: #c9302c;
         }
+        /* Card Container & Card Styles */
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        .account-card {
+            background-color: white;
+            width: 250px;
+            height: 133px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .account-card:hover {
+            transform: scale(1.02);
+        }
+        .account-header {
+            padding: 20px 0px;
+            color: white;
+        }
+        .account-header h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .account-body {
+            padding: 10px 15px;
+            text-align: left;
+        }
+        /* Create Account Card Styles */
+        .create-card {
+            background-color: white;
+            width: 250px;
+            height: 133px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .create-card:hover {
+            transform: scale(1.02);
+        }
+        .plus-sign {
+            font-size: 48px;
+            color: #888;
+        }
+        .create-card-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        /* Modal styles (for Info modal) */
         .info-modal, .modal-overlay {
             display: none;
             position: fixed;
@@ -149,7 +127,7 @@
             text-align: left;
         }
         .header .right-buttons .info-modal-button {
-            background-color: #4f86d9;
+            background-color: #007bff;
         }
         .info-modal button {
             background-color: #d9534f;
@@ -166,6 +144,31 @@
             position: absolute;
             bottom: 20px;
             right: 20px;
+        }
+        /* Inline Create Account Form Styles */
+        #createAccountForm input {
+            width: 90%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #createAccountForm button {
+            width: 90%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #createAccountForm button[type="submit"] {
+            background-color: #5cb85c;
+            color: white;
+        }
+        #createAccountForm button[type="button"] {
+            background-color: #d9534f;
+            color: white;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -191,77 +194,77 @@
     </div>
 </div>
 
-<div id="modalOverlay" class="modal-overlay"></div>
-
-<div id="createAccountModal" class="modal">
-    <h2>Create New Account</h2>
-    <input type="text" id="accountName" placeholder="Enter account name">
-    <button onclick="createAccount()">Submit</button>
-    <button class="cancel-btn" onclick="closeCreateAccountModal()">Cancel</button>
+<h1 style="text-align: left; padding: 20px 0 10px 10%">Accounts</h1>
+<div class="card-container">
+    {{if .Accounts}}
+    {{range .Accounts}}
+    <a href="/account/{{.ID}}" style="text-decoration: none; color: inherit;">
+        <div class="account-card">
+            <div class="account-header" data-account-id="{{.ID}}">
+                <h3>{{.Name}}</h3>
+            </div>
+            <div class="account-body">
+                <p><strong>Balance:</strong> {{.Balance}}</p>
+            </div>
+        </div>
+    </a>
+    {{end}}
+    {{end}}
+    <!-- Create Account Card -->
+    <div class="account-card create-card" id="createAccountCard">
+        <div class="create-card-content">
+            <span class="plus-sign">+</span>
+        </div>
+    </div>
 </div>
 
-<h2 style="text-align: left; padding: 20px 0 0 15%">Accounts</h2>
-<div class="table-container">
-    <table id="accountsTable">
-        <tr>
-            <th>Account ID</th>
-            <th>Name</th>
-            <th>Balance</th>
-            <th>Created At</th>
-            <th>Updated At</th>
-        </tr>
-        {{if .Accounts}}
-        {{range .Accounts}}
-        <a href="/account/{{.ID}}"><tr>
-            <td>{{.ID}}</td>
-            <td>{{.Name}}</td>
-            <td>{{.Balance}}</td>
-            <td>{{.CreatedAt.Format "2006-01-02 15:04:05"}}</td>
-            <td>{{.UpdatedAt.Format "2006-01-02 15:04:05"}}</td>
-        </tr></a>
-        {{end}}
-        {{else}}
-        <tr>
-            <td colspan="5">No accounts to display.</td>
-        </tr>
-        {{end}}
-    </table>
-</div>
-
-<button class="create-btn" onclick="showCreateAccountModal()">Create Account</button>
+<!-- (The old Create Account Modal has been removed in favor of inline creation) -->
 
 </body>
 
 <script>
-    function logout() {
-        window.location.href = "/logout";
+    // Helper functions for hash-based color generation
+    function hashCode(str) {
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return hash;
+    }
+    function intToRGB(i) {
+        var c = (i & 0x00FFFFFF).toString(16).toUpperCase();
+        return "00000".substring(0, 6 - c.length) + c;
     }
 
-    function showInfoModal() {
-        document.getElementById("modalOverlay").style.display = "block";
-        document.getElementById("infoModal").style.display = "block";
-    }
+    document.addEventListener("DOMContentLoaded", function() {
+        // Set header colors based on account id hash
+        var headers = document.querySelectorAll('.account-header');
+        headers.forEach(function(header) {
+            var accountId = header.getAttribute('data-account-id');
+            var hash = hashCode(accountId);
+            var color = '#' + intToRGB(hash);
+            header.style.backgroundColor = color;
+        });
 
-    function closeInfoModal() {
-        document.getElementById("modalOverlay").style.display = "none";
-        document.getElementById("infoModal").style.display = "none";
-    }
+        // When clicking on the "create account" card, show the inline form
+        var createCard = document.getElementById("createAccountCard");
+        createCard.addEventListener("click", function() {
+            if (!document.getElementById("createAccountForm")) {
+                this.innerHTML = '<form id="createAccountForm" onsubmit="return submitNewAccount(event)" style="width: 100%; display: flex; flex-direction: column; align-items: center;">' +
+                    '<input type="text" id="newAccountName" placeholder="Account Name" required />' +
+                    '<button type="submit">Create</button>' +
+                    '<button type="button" onclick="cancelCreateAccount()">Cancel</button>' +
+                    '</form>';
+            }
+        });
+    });
 
-    function showCreateAccountModal() {
-        document.getElementById("modalOverlay").style.display = "block";
-        document.getElementById("createAccountModal").style.display = "block";
-    }
-
-    function closeCreateAccountModal() {
-        document.getElementById("modalOverlay").style.display = "none";
-        document.getElementById("createAccountModal").style.display = "none";
-    }
-
-    function createAccount() {
-        let accountName = document.getElementById("accountName").value;
+    function submitNewAccount(event) {
+        event.preventDefault();
+        var accountName = document.getElementById("newAccountName").value;
         if (accountName.trim() === "") {
             alert("Account name cannot be empty.");
-            return;
+            return false;
         }
 
         fetch("/create-account", {
@@ -276,20 +279,57 @@
                 return response.json();
             })
             .then(data => {
-                let table = document.getElementById("accountsTable");
+                // Append new account card before the create card
+                var cardContainer = document.querySelector(".card-container");
+                var newCard = document.createElement("a");
+                newCard.href = "/account/" + data.id;
+                newCard.style.textDecoration = "none";
+                newCard.style.color = "inherit";
+                newCard.innerHTML = '<div class="account-card">' +
+                    '<div class="account-header" data-account-id="' + data.id + '">' +
+                    '<h3>' + data.name + '</h3>' +
+                    '</div>' +
+                    '<div class="account-body">' +
+                    '<p><strong>Balance:</strong> ' + data.balance + '</p>' +
+                    '</div>' +
+                    '</div>';
+                // Insert new card before the create card
+                var createCard = document.getElementById("createAccountCard");
+                cardContainer.insertBefore(newCard, createCard);
 
-                if (table.rows.length === 2 && table.rows[1].cells[0].innerHTML === "No accounts to display.") {
-                    table.deleteRow(1);
-                }
+                // Set color for the new account header
+                var newHeader = newCard.querySelector('.account-header');
+                var hash = hashCode(data.id.toString());
+                var color = '#' + intToRGB(hash);
+                newHeader.style.backgroundColor = color;
 
-                let newRow = table.insertRow(-1);
-                newRow.innerHTML = `<td>${data.id}</td><td>${data.name}</td><td>${data.balance}</td><td>${data.created_at}</td><td>${data.updated_at}</td>`;
-                closeCreateAccountModal();
+                // Reset create account card back to plus sign
+                cancelCreateAccount();
             })
             .catch(error => {
                 alert("Error creating account: " + error.message);
                 console.error("Error creating account:", error);
             });
+        return false;
+    }
+
+    function cancelCreateAccount() {
+        var createCard = document.getElementById("createAccountCard");
+        createCard.innerHTML = '<div class="create-card-content"><span class="plus-sign">+</span></div>';
+    }
+
+    function logout() {
+        window.location.href = "/logout";
+    }
+
+    function showInfoModal() {
+        document.getElementById("modalOverlay").style.display = "block";
+        document.getElementById("infoModal").style.display = "block";
+    }
+
+    function closeInfoModal() {
+        document.getElementById("modalOverlay").style.display = "none";
+        document.getElementById("infoModal").style.display = "none";
     }
 </script>
 </html>
