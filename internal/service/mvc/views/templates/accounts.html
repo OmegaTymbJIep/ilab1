@@ -326,7 +326,7 @@
             return false;
         }
 
-        fetch("/create-account", {
+        fetch("/account", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: accountName })

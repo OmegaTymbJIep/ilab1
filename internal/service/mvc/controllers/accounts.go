@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"gitlab.com/distributed_lab/ape"
 	"gitlab.com/distributed_lab/ape/problems"
 
@@ -40,14 +41,14 @@ func (c *Main) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	ape.Render(w, responses.NewCreateAccount(account))
 }
 
-func (c *Main) MainPage(w http.ResponseWriter, r *http.Request) {
-	accounts, err := c.model.GetAccounts(CustomerID(r))
+func (c *Main) AccountListPage(w http.ResponseWriter, r *http.Request) {
+	accounts, err := c.model.GetAccountList(CustomerID(r))
 	if err != nil {
 		InternalError(w, r, fmt.Errorf("failed to get accounts: %w", err))
 		return
 	}
 
-	viewData := &views.Main{
+	viewData := &views.AccountsList{
 		Accounts: accounts,
 	}
 
@@ -56,4 +57,33 @@ func (c *Main) MainPage(w http.ResponseWriter, r *http.Request) {
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}
+}
+
+func (c *Main) AccountPage(w http.ResponseWriter, r *http.Request) {
+	accountIDRaw := r.URL.Query().Get("account_id")
+	accountID, err := uuid.Parse(accountIDRaw)
+	if err != nil {
+		Log(r).WithError(err).Debug("bad request")
+		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid account_id"))...)
+		return
+	}
+
+	account, err := c.model.GetAccount(CustomerID(r), accountID)
+	if err != nil {
+		InternalError(w, r, fmt.Errorf("failed to get account: %w", err))
+		return
+	}
+
+	transactions, err := c.model.GetAccountTransactions(CustomerID(r), accountID)
+	if err != nil {
+		InternalError(w, r, fmt.Errorf("failed to get transactions: %w", err))
+		return
+	}
+
+	_ = &views.Account{
+		Account:      account,
+		Transactions: transactions,
+	}
+
+
 }
