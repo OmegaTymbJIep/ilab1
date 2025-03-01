@@ -55,6 +55,9 @@ CREATE TABLE transactions (
     )
 );
 
+CREATE UNIQUE INDEX unique_atm_signature_for_deposits ON transactions (atm_signature)
+    WHERE type = 0;
+
 CREATE INDEX idx_customers_email ON customers(email);
 CREATE INDEX idx_customers_username ON customers(username);
 
@@ -73,8 +76,14 @@ CREATE INDEX idx_transactions_sender_created_at_withdrawal_transfer
 
 -- +migrate Down
 
+DROP INDEX IF EXISTS unique_atm_signature_for_deposits;
+
 DROP INDEX IF EXISTS idx_customers_email;
 DROP INDEX IF EXISTS idx_customers_username;
+
+DROP INDEX IF EXISTS idx_transactions_sender;
+DROP INDEX IF EXISTS idx_transactions_recipient;
+
 DROP INDEX IF EXISTS idx_transactions_recipient_created_at_deposit_transfer;
 DROP INDEX IF EXISTS idx_transactions_sender_created_at_withdrawal_transfer;
 
