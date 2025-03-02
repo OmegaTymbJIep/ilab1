@@ -199,6 +199,11 @@
                 return; // Stop here, don't submit
             }
 
+            if (response.status === 401) {
+                showAlert("Invalid password.", type = 'error')
+                return;
+            }
+
             if (response.status === 404) {
                 showAlert("User with such email not found.", type = 'error')
                 return;

@@ -12,6 +12,7 @@ const (
 
 	AuthTemplateName     = "auth.html"
 	AccountsTemplateName = "accounts.html"
+	AccountTemplateName  = "account.html"
 )
 
 func ReadTemplates(templatesDir string) (*template.Template, error) {

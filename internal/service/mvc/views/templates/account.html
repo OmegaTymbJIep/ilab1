@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Account Details</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            color: black;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header .right-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .header button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .header button:hover {
+            background-color: #c9302c;
+        }
+        .header .right-buttons .info-modal-button {
+            background-color: #007bff;
+        }
+        .header .right-buttons .info-modal-button:hover {
+            background-color: #0062c7;
+        }
+
+        /* Account Details Card */
+        .account-details {
+            background-color: white;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            text-align: left;
+        }
+        .account-header {
+            padding: 20px;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 20px;
+        }
+        .account-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .account-balance {
+            font-size: 28px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .account-info {
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+        .account-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .account-actions button {
+            background-color: transparent;
+            color: #4CAF50;
+            border: 2px solid #4CAF50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .account-actions button:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .account-actions button.withdraw {
+            color: #f44336;
+            border-color: #f44336;
+        }
+
+        .account-actions button.withdraw:hover {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .account-actions button.transfer {
+            color: #2196F3;
+            border-color: #2196F3;
+        }
+
+        .account-actions button.transfer:hover {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        /* Transactions Table */
+        .transactions {
+            margin-top: 30px;
+            padding: 0 20px;
+        }
+        .transactions h3 {
+            text-align: left;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .transactions-table th,
+        .transactions-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .transactions-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .transactions-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .transaction-deposit {
+            color: #4CAF50;
+        }
+        .transaction-withdrawal {
+            color: #f44336;
+        }
+        .transaction-transfer-in {
+            color: #2196F3;
+        }
+        .transaction-transfer-out {
+            color: #FF9800;
+        }
+        .transaction-amount {
+            font-weight: bold;
+        }
+        .back-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #000;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .back-link:hover {
+            color: #555;
+        }
+        .back-link span {
+            margin-right: 5px;
+        }
+
+        /* Modal Styles (for transaction forms and info modal) */
+        .modal,
+        .info-modal,
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .modal-content {
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            background-color: #fff;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+        }
+        .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .modal-content button {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .modal-content input {
+            width: 90%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #555;
+        }
+        .modal-content .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            margin-right: 10px;
+        }
+        .modal-content .cancel-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .info-modal,
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .info-modal-content {
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 260px;
+            min-height: 200px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            background-color: #fff;
+            text-align: left;
+        }
+        .info-modal button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .info-modal button:hover {
+            background-color: #c9302c;
+        }
+        .info-modal-content .close-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+        }
+        #alert-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .alert {
+            position: relative;
+            min-width: 200px;
+            padding: 15px 20px 20px 20px; /* Extra bottom padding for the timeline */
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            opacity: 1;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            overflow: hidden;
+        }
+        .alert.note {
+            background-color: #e7f3fe;
+            border-left: 5px solid #2196F3;
+            color: #333;
+        }
+        .alert.error {
+            background-color: #f8d7da;
+            border-left: 5px solid #f44336;
+            color: #721c24;
+        }
+        .alert.success {
+            background-color: #d4edda;
+            border-left: 5px solid #28a745;
+            color: #155724;
+        }
+        .alert .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: inherit;
+            width: 100%;
+            height: 100%;
+        }
+        .alert .alert-timeline {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background-color: rgba(0,0,0,0.2);
+            width: 100%;
+            transition-property: width;
+            transition-timing-function: linear;
+        }
+    </style>
+</head>
+<body>
+<div id="alert-container"></div>
+
+<div class="header">
+    <h1>Lab 1</h1>
+    <div class="right-buttons">
+        <button onclick="showInfoModal()" class="info-modal-button">Info</button>
+        <button onclick="logout()">Log Out</button>
+    </div>
+</div>
+
+<div id="modalOverlay" class="modal-overlay"></div>
+
+<div id="infoModal" class="info-modal">
+    <div class="info-modal-content">
+        <h2 style="text-align: center">Student Information</h2>
+        <p><strong>Name:</strong> Levochko Anton</p>
+        <p><strong>Group:</strong> K-25</p>
+        <p><strong>Date:</strong> 2025</p>
+        <button class="close-button" onclick="closeInfoModal()">Close</button>
+    </div>
+</div>
+
+<!-- Deposit Modal -->
+<div id="depositModal" class="modal">
+    <div class="modal-content">
+        <h3>Deposit Funds</h3>
+        <form id="depositForm" onsubmit="return handleDeposit(event)">
+            <input type="number" id="depositAmount" placeholder="Amount" min="1" required />
+            <input type="text" id="depositSignature" placeholder="ATM Signature" required />
+            <div>
+                <button type="submit" class="submit-btn">Deposit</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('depositModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div id="withdrawModal" class="modal">
+    <div class="modal-content">
+        <h3>Withdraw Funds</h3>
+        <form id="withdrawForm" onsubmit="return handleWithdraw(event)">
+            <input type="number" id="withdrawAmount" placeholder="Amount" min="1" required />
+            <div>
+                <button type="submit" class="submit-btn">Withdraw</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('withdrawModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Transfer Modal -->
+<div id="transferModal" class="modal">
+    <div class="modal-content">
+        <h3>Transfer Funds</h3>
+        <form id="transferForm" onsubmit="return handleTransfer(event)">
+            <input type="number" id="transferAmount" placeholder="Amount" min="1" required />
+            <input type="text" id="transferRecipient" placeholder="Recipient Account ID" required />
+            <div>
+                <button type="submit" class="submit-btn">Transfer</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('transferModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h2 style="text-align: left; padding: 20px 10% 10px 10%">
+    <a href="/" class="back-link" style="display: inline-flex; align-items: center;">
+        <span style="margin-right: 5px; font-size: 24px; vertical-align: middle; line-height: 1;">&larr;</span>
+    </a>
+    Account: {{.Account.ID}}
+</h2>
+
+<div class="account-details">
+    <div class="account-header" id="accountHeader" data-account-id="{{.Account.ID}}">
+        <h2>{{.Account.Name}}</h2>
+    </div>
+
+    <div class="account-balance">
+        Balance: <span id="accountBalance">{{.Account.Balance}}</span>
+    </div>
+
+    <div class="account-info">
+        <p><strong>Created:</strong> {{.Account.CreatedAt.Format "Jan 02, 2006 15:04:05"}}</p>
+        <p><strong>Last Updated:</strong> {{.Account.UpdatedAt.Format "Jan 02, 2006 15:04:05"}}</p>
+    </div>
+
+    <div class="account-actions">
+        <button onclick="showModal('depositModal')" class="deposit">Deposit</button>
+        <button onclick="showModal('withdrawModal')" class="withdraw">Withdraw</button>
+        <button onclick="showModal('transferModal')" class="transfer">Transfer</button>
+    </div>
+
+    <div class="transactions">
+        <h3>Transaction History</h3>
+        <table class="transactions-table">
+            <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Details</th>
+                <th>Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{if .Transactions}}
+            {{range .Transactions}}
+            <tr>
+                <td>{{.CreatedAt.Format "Jan 02, 2006 15:04:05"}}</td>
+                <td>
+                    {{if eq .Type 0}}
+                    <span class="transaction-deposit">Deposit</span>
+                    {{else if eq .Type 1}}
+                    <span class="transaction-withdrawal">Withdrawal</span>
+                    {{else if eq .Type 2}}
+                    {{if eq .Recipient $.Account.ID}}
+                    <span class="transaction-transfer-in">Transfer In</span>
+                    {{else}}
+                    <span class="transaction-transfer-out">Transfer Out</span>
+                    {{end}}
+                    {{end}}
+                </td>
+                <td>
+                    {{if eq .Type 0}}
+                    Deposit to account
+                    {{else if eq .Type 1}}
+                    Withdrawal from account
+                    {{else if eq .Type 2}}
+                    {{if eq .Recipient $.Account.ID}}
+                    From account: {{.Sender}}
+                    {{else}}
+                    To account: {{.Recipient}}
+                    {{end}}
+                    {{end}}
+                </td>
+                <td class="transaction-amount">
+                    {{if or (eq .Type 0) (and (eq .Type 2) (eq .Recipient $.Account.ID))}}
+                    +{{.Amount}}
+                    {{else}}
+                    -{{.Amount}}
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+            {{else}}
+            <tr>
+                <td colspan="4" style="text-align: center;">No transactions yet</td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function showAlert(message, type = 'note', duration = 3000) {
+        // Create the alert element
+        const alertEl = document.createElement('div');
+        alertEl.classList.add('alert', type);
+
+        // Create the message element
+        const messageEl = document.createElement('span');
+        messageEl.innerHTML = message;
+        alertEl.appendChild(messageEl);
+
+        // Create the close button
+        const closeBtn = document.createElement('button');
+        closeBtn.classList.add('close-btn');
+        closeBtn.onclick = () => removeAlert(alertEl);
+        alertEl.appendChild(closeBtn);
+
+        // Create the timeline element inside the alert
+        const timelineEl = document.createElement('div');
+        timelineEl.classList.add('alert-timeline');
+        // Set transition duration to match the alert duration
+        timelineEl.style.transitionDuration = duration + 'ms';
+        alertEl.appendChild(timelineEl);
+
+        // Append the alert to the container (stackable)
+        document.getElementById('alert-container').appendChild(alertEl);
+
+        // Force a reflow and then start the timeline animation
+        timelineEl.offsetWidth; // trigger reflow
+        timelineEl.style.width = '0%';
+
+        // Auto-remove the alert after the specified duration
+        if (duration > 0) {
+            setTimeout(() => removeAlert(alertEl), duration);
+        }
+    }
+
+    // Function to remove an alert with a fade-out effect
+    function removeAlert(alertEl) {
+        alertEl.style.opacity = '0';
+        alertEl.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (alertEl.parentNode) {
+                alertEl.parentNode.removeChild(alertEl);
+            }
+        }, 500); // This timeout matches the CSS transition duration
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Set header color based on account ID
+        var accountHeader = document.getElementById('accountHeader');
+        var accountId = accountHeader.getAttribute('data-account-id');
+        accountHeader.style.backgroundColor = hashToHSL(accountId);
+    });
+
+    function hashToHSL(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        let hue = Math.abs(hash) % 360;
+        const saturation = 60;
+        const lightness = 50;
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    }
+
+    function showModal(modalId) {
+        document.getElementById(modalId).style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    function showInfoModal() {
+        document.getElementById("infoModal").style.display = "block";
+        document.getElementById("modalOverlay").style.display = "block";
+    }
+
+    function closeInfoModal() {
+        document.getElementById("infoModal").style.display = "none";
+        document.getElementById("modalOverlay").style.display = "none";
+    }
+
+    function logout() {
+        fetch('/logout', {
+            method: 'GET',
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "/login";
+                } else {
+                    throw new Error("Logout failed");
+                }
+            })
+            .catch(error => {
+                showAlert("Error during logout", 'error');
+                console.error(error);
+            });
+    }
+
+    function handleDeposit(event) {
+        event.preventDefault();
+        const amount = document.getElementById('depositAmount').value;
+        const signature = document.getElementById('depositSignature').value;
+
+        if (!signature.trim()) {
+            showAlert("ATM signature is required", 'error');
+            return false;
+        }
+
+        fetch('/api/v1/transactions/deposit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                account_id: '{{.Account.ID}}',
+                amount: parseInt(amount),
+                atm_signature: signature
+            })
+        })
+            .then(async response => {
+                if (response.status === 400) {
+                    const errorData = await response.json();
+                    if (errorData.errors[0].detail.includes('signature')) {
+                        throw new Error('Deposit already submitted');
+                    }
+                    throw new Error('Invalid amount');
+                }
+                if (response.status === 401) throw new Error('Invalid ATM signature');
+                if (response.status === 404) throw new Error('Account not found');
+                if (!response.ok) throw new Error('Server error');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('accountBalance').textContent = data.new_balance;
+                showAlert('Deposit successful', 'success');
+                closeModal('depositModal');
+                setTimeout(() => window.location.reload(), 1000);
+            })
+            .catch(error => {
+                showAlert(error.message, 'error');
+            });
+        return false;
+    }
+
+    function handleWithdraw(event) {
+        event.preventDefault();
+        const amount = document.getElementById('withdrawAmount').value;
+
+        fetch('/api/v1/transactions/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                account_id: '{{.Account.ID}}',
+                amount: parseInt(amount)
+            })
+        })
+            .then(response => {
+                if (response.status === 400) throw new Error('Invalid amount');
+                if (response.status === 403) throw new Error('Insufficient funds');
+                if (response.status === 404) throw new Error('Account not found');
+                if (!response.ok) throw new Error('Server error');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('accountBalance').textContent = data.new_balance;
+                showAlert('Withdrawal successful', 'success');
+                closeModal('withdrawModal');
+                setTimeout(() => window.location.reload(), 1000);
+            })
+            .catch(error => {
+                showAlert(error.message, 'error');
+            });
+        return false;
+    }
+
+    function handleTransfer(event) {
+        event.preventDefault();
+        const amount = document.getElementById('transferAmount').value;
+        const recipient = document.getElementById('transferRecipient').value;
+
+        if (!recipient.trim()) {
+            showAlert("Recipient account ID is required", 'error');
+            return false;
+        }
+
+        fetch('/api/v1/transactions/transfer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sender_id: '{{.Account.ID}}',
+                recipient_id: recipient,
+                amount: parseInt(amount)
+            })
+        })
+            .then(async response => {
+                if (response.status === 400) {
+                    const errorData = await response.json();
+                    throw new Error(capitalize(errorData.errors[0].detail));
+                }
+                if (response.status === 403) throw new Error('Insufficient funds');
+                if (response.status === 404) throw new Error('Account not found');
+                if (response.status === 409) throw new Error('Cannot transfer to same account');
+                if (!response.ok) throw new Error('Server error');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('accountBalance').textContent = data.new_balance;
+                showAlert('Transfer successful', 'success');
+                closeModal('transferModal');
+                setTimeout(() => window.location.reload(), 1000);
+            })
+            .catch(error => {
+                showAlert(error.message, 'error');
+            });
+        return false;
+    }
+
+    function capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+</script>
+</body>
+</html>
