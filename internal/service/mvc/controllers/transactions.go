@@ -33,21 +33,24 @@ func (c *Transactions) DepositFunds(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newBalance, err := c.model.DepositFunds(CustomerID(r), req)
-	switch {
-	case errors.Is(err, models.ErrorInvalidATMSignature):
-		Log(r).WithField("reason", err).Debug("bad request")
-		ape.RenderErr(w, requests.BadRequest(models.ErrorInvalidATMSignature)...)
-		return
-	case errors.Is(err, models.ErrorAccountNotFound):
-		Log(r).WithField("reason", err).Debug("not found")
-		ape.RenderErr(w, problems.NotFound())
-		return
-	case errors.Is(err, models.ErrorATMSignatureNotUnique):
-		Log(r).WithField("reason", err).Debug("bad request")
-		ape.RenderErr(w, requests.BadRequest(models.ErrorATMSignatureNotUnique)...)
-		return
-	case err != nil:
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrorInvalidATMSignature):
+			Log(r).WithField("reason", err).Debug("bad request")
+			ape.RenderErr(w, requests.BadRequest(models.ErrorInvalidATMSignature)...)
+			return
+		case errors.Is(err, models.ErrorAccountNotFound):
+			Log(r).WithField("reason", err).Debug("not found")
+			ape.RenderErr(w, problems.NotFound())
+			return
+		case errors.Is(err, models.ErrorATMSignatureNotUnique):
+			Log(r).WithField("reason", err).Debug("bad request")
+			ape.RenderErr(w, requests.BadRequest(models.ErrorATMSignatureNotUnique)...)
+			return
+		}
+
 		InternalError(w, r, fmt.Errorf("failed to deposit funds: %w", err))
+		return
 	}
 
 	ape.Render(w, responses.NewTransactionResult(newBalance))
@@ -62,16 +65,18 @@ func (c *Transactions) WithdrawFunds(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newBalance, err := c.model.WithdrawFunds(CustomerID(r), req)
-	switch {
-	case errors.Is(err, models.ErrorAccountNotFound):
-		Log(r).WithField("reason", err).Debug("not found")
-		ape.RenderErr(w, problems.NotFound())
-		return
-	case errors.Is(err, models.ErrorInsufficientFunds):
-		Log(r).WithField("reason", err).Debug("forbidden")
-		ape.RenderErr(w, problems.Forbidden())
-		return
-	case err != nil:
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrorAccountNotFound):
+			Log(r).WithField("reason", err).Debug("not found")
+			ape.RenderErr(w, problems.NotFound())
+			return
+		case errors.Is(err, models.ErrorInsufficientFunds):
+			Log(r).WithField("reason", err).Debug("forbidden")
+			ape.RenderErr(w, problems.Forbidden())
+			return
+		}
+
 		InternalError(w, r, fmt.Errorf("failed to withdraw funds: %w", err))
 		return
 	}
@@ -89,21 +94,21 @@ func (c *Transactions) TransferFunds(w http.ResponseWriter, r *http.Request) {
 
 	newBalance, err := c.model.TransferFunds(CustomerID(r), req)
 	if err != nil {
-		if errors.Is(err, models.ErrorAccountNotFound) {
+		switch {
+		case errors.Is(err, models.ErrorAccountNotFound):
 			Log(r).WithField("reason", err).Debug("not found")
 			ape.RenderErr(w, problems.NotFound())
 			return
-		}
-		if errors.Is(err, models.ErrorInsufficientFunds) {
+		case errors.Is(err, models.ErrorInsufficientFunds):
+			Log(r).WithField("reason", err).Debug("forbidden")
+			ape.RenderErr(w, problems.Forbidden())
+			return
+		case errors.Is(err, models.ErrorRecipientNotFound):
 			Log(r).WithField("reason", err).Debug("forbidden")
 			ape.RenderErr(w, problems.Forbidden())
 			return
 		}
-		if errors.Is(err, models.ErrorRecipientNotFound) {
-			Log(r).WithField("reason", err).Debug("not found")
-			ape.RenderErr(w, notFound("recipient account not found"))
-			return
-		}
+
 		InternalError(w, r, fmt.Errorf("failed to transfer funds: %w", err))
 		return
 	}

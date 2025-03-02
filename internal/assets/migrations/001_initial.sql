@@ -34,10 +34,10 @@ CREATE TABLE customers_accounts (
 CREATE TABLE transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type INTEGER,
-    sender_fkey UUID REFERENCES accounts(id),
-    recipient_fkey UUID REFERENCES accounts(id),
+    sender_fkey UUID REFERENCES accounts(id) ON DELETE CASCADE,
+    recipient_fkey UUID REFERENCES accounts(id) ON DELETE CASCADE,
     amount BIGINT NOT NULL,
-    atm_signature CHAR(100) NOT NULL UNIQUE,
+    atm_signature CHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CHECK (

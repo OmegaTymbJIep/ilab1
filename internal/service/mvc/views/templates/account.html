@@ -112,6 +112,16 @@
             color: white;
         }
 
+        .modal-content button.delete {
+            color: #f44336;
+            border-color: #f44336;
+        }
+
+        .modal-content button.delete:hover {
+            background-color: #f44336;
+            color: white;
+        }
+
         .account-actions button.transfer {
             color: #2196F3;
             border-color: #2196F3;
@@ -441,7 +451,8 @@
             <h3>Account Details</h3>
             <p><strong>Created:</strong> {{.Account.CreatedAt.Format "Jan 02, 2006 15:04:05"}}</p>
             <p><strong>Last Updated:</strong> {{.Account.UpdatedAt.Format "Jan 02, 2006 15:04:05"}}</p>
-            <div>
+            <div style="display: flex; justify-content: space-between;">
+                <button type="button" class="delete" onclick="deleteAccount()">Delete Account</button>
                 <button type="button" class="cancel-btn" onclick="closeModal('accountDetailsModal')">Close</button>
             </div>
         </div>
@@ -765,6 +776,29 @@
                 showAlert(error.message, 'error');
             });
         return false;
+    }
+
+    function deleteAccount() {
+        fetch('/api/v1/accounts/{{.Account.ID}}', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        })
+            .then(async response => {
+                if (response.status === 400) {
+                    const errorData = await response.json();
+                    throw new Error(capitalize(errorData.errors[0].detail));
+                }
+                if (response.status === 404) throw new Error('Account not found');
+                if (response.status === 403) throw new Error('Cannot delete account with non-zero balance');
+                if (!response.ok) throw new Error('Server error');
+
+                showAlert('Account deleted successfully', 'success');
+                setTimeout(() => window.location.href = "/", 1000);
+            })
+            .catch(error => {
+                showAlert(error.message, 'error');
+                closeModal('accountDetailsModal');
+            });
     }
 
     function capitalize(str) {

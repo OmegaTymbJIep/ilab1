@@ -97,3 +97,31 @@ func (c *Accounts) AccountPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (c *Accounts) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	accountIDRaw := r.PathValue("account-id")
+	accountID, err := uuid.Parse(accountIDRaw)
+	if err != nil {
+		Log(r).WithField("reason", err).Debug("bad request")
+		ape.RenderErr(w, requests.BadRequest(errors.New("invalid account id"))...)
+		return
+	}
+
+	err = c.model.DeleteAccount(CustomerID(r), accountID)
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrorAccountNotFound):
+			ape.RenderErr(w, problems.NotFound())
+			return
+		case errors.Is(err, models.ErrorNonZeroBalance):
+			Log(r).WithField("reason", err).Debug("forbidden")
+			ape.RenderErr(w, problems.Forbidden())
+			return
+		}
+
+		InternalError(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

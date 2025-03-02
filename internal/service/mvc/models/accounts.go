@@ -10,6 +10,7 @@ import (
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/controllers/requests"
 )
 
+var ErrorNonZeroBalance = errors.New("account with non-zero balance")
 var ErrorAccountNotFound = errors.New("account not found")
 
 type Accounts struct {
@@ -97,4 +98,33 @@ func (m *Accounts) GetAccountTransactions(customerID, accountID uuid.UUID) ([]*d
 	}
 
 	return transactions, nil
+}
+
+func (m *Accounts) DeleteAccount(customerID, accountID uuid.UUID) error {
+	account, err := m.GetAccount(customerID, accountID)
+	if err != nil {
+		return err
+	}
+
+	if account.Balance != 0 {
+		return ErrorNonZeroBalance
+	}
+
+	err = m.db.Transaction(func() error {
+		err = m.db.CustomersAccounts().RemoveAccountsFromCustomer(customerID, accountID)
+		if err != nil {
+			return fmt.Errorf("failed to remove customer association: %w", err)
+		}
+
+		if err = m.db.Accounts().Delete(accountID); err != nil {
+			return fmt.Errorf("failed to delete account: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
