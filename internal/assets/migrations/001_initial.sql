@@ -55,6 +55,26 @@ CREATE TABLE transactions (
     )
 );
 
+-- +migrate StatementBegin
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+-- +migrate StatementEnd
+
+CREATE TRIGGER update_customers_updated_at
+    BEFORE UPDATE ON customers
+    FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_accounts_updated_at
+    BEFORE UPDATE ON accounts
+    FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
 CREATE UNIQUE INDEX unique_atm_signature_for_deposits ON transactions (atm_signature)
     WHERE type = 0;
 
@@ -77,6 +97,10 @@ CREATE INDEX idx_transactions_sender_created_at_withdrawal_transfer
 -- +migrate Down
 
 DROP INDEX IF EXISTS unique_atm_signature_for_deposits;
+
+DROP TRIGGER IF EXISTS update_customers_updated_at ON customers;
+DROP TRIGGER IF EXISTS update_accounts_updated_at ON accounts;
+DROP FUNCTION IF EXISTS update_updated_at_column();
 
 DROP INDEX IF EXISTS idx_customers_email;
 DROP INDEX IF EXISTS idx_customers_username;
