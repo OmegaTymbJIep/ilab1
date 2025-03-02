@@ -18,8 +18,9 @@ import (
 type MVC struct {
 	log *logan.Entry
 
-	auth *controllers.Auth
-	main *controllers.Main
+	auth         *controllers.Auth
+	main         *controllers.Accounts
+	transactions *controllers.Transactions
 
 	templates *template.Template
 }
@@ -38,10 +39,11 @@ func NewMVC(log *logan.Entry, cfg config.Config) (*MVC, error) {
 	}
 
 	return &MVC{
-		log:       log,
-		auth:      controllers.NewAuth(authModel),
-		main:      controllers.NewMain(models.NewMain(db)),
-		templates: templates,
+		log:          log,
+		auth:         controllers.NewAuth(authModel),
+		main:         controllers.NewAccounts(models.NewMain(db)),
+		transactions: controllers.NewTransactions(models.NewTransactions(db)),
+		templates:    templates,
 	}, nil
 }
 
@@ -62,11 +64,21 @@ func (m *MVC) Register(r chi.Router) {
 
 		r.With(m.auth.VerifyJWT).Route("/", func(r chi.Router) {
 			r.Route("/account", func(r chi.Router) {
-				r.Post("/", m.main.CreateAccount)
 				r.Get("/{account-id}", m.main.AccountPage)
 			})
 			r.Get("/logout", controllers.LogOut)
 			r.Get("/", m.main.AccountListPage)
+		})
+
+		r.With(m.auth.VerifyJWT).Route("/api/v1", func(r chi.Router) {
+			r.Route("/transactions", func(r chi.Router) {
+				r.Post("/deposit", m.transactions.DepositFunds)
+				r.Post("/withdraw", m.transactions.WithdrawFunds)
+				r.Post("/transfer", m.transactions.TransferFunds)
+			})
+			r.Route("/accounts", func(r chi.Router) {
+				r.Post("/", m.main.CreateAccount)
+			})
 		})
 	})
 }

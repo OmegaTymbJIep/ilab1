@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -14,20 +15,20 @@ import (
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/views"
 )
 
-type Main struct {
-	model *models.Main
+type Accounts struct {
+	model *models.Accounts
 }
 
-func NewMain(model *models.Main) *Main {
-	return &Main{
+func NewAccounts(model *models.Accounts) *Accounts {
+	return &Accounts{
 		model: model,
 	}
 }
 
-func (c *Main) CreateAccount(w http.ResponseWriter, r *http.Request) {
+func (c *Accounts) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	req, err := requests.NewCreateAccount(r)
 	if err != nil {
-		Log(r).WithError(err).Debug("bad request")
+		Log(r).WithField("reason", err).Debug("bad request")
 		ape.RenderErr(w, requests.BadRequest(err)...)
 		return
 	}
@@ -41,7 +42,7 @@ func (c *Main) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	ape.Render(w, responses.NewCreateAccount(account))
 }
 
-func (c *Main) AccountListPage(w http.ResponseWriter, r *http.Request) {
+func (c *Accounts) AccountListPage(w http.ResponseWriter, r *http.Request) {
 	accounts, err := c.model.GetAccountList(CustomerID(r))
 	if err != nil {
 		InternalError(w, r, fmt.Errorf("failed to get accounts: %w", err))
@@ -52,24 +53,29 @@ func (c *Main) AccountListPage(w http.ResponseWriter, r *http.Request) {
 		Accounts: accounts,
 	}
 
-	if err := Templates(r).ExecuteTemplate(w, views.AccountsTemplateName, viewData); err != nil {
+	if err = Templates(r).ExecuteTemplate(w, views.AccountsTemplateName, viewData); err != nil {
 		Log(r).WithError(err).Error("failed to execute template")
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}
 }
 
-func (c *Main) AccountPage(w http.ResponseWriter, r *http.Request) {
-	accountIDRaw := r.URL.Query().Get("account_id")
+func (c *Accounts) AccountPage(w http.ResponseWriter, r *http.Request) {
+	accountIDRaw := r.PathValue("account-id")
 	accountID, err := uuid.Parse(accountIDRaw)
 	if err != nil {
-		Log(r).WithError(err).Debug("bad request")
-		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid account_id"))...)
+		Log(r).WithField("reason", err).Debug("bad request")
+		ape.RenderErr(w, requests.BadRequest(fmt.Errorf("invalid account id"))...)
 		return
 	}
 
 	account, err := c.model.GetAccount(CustomerID(r), accountID)
 	if err != nil {
+		if errors.Is(err, models.ErrorAccountNotFound) {
+			ape.RenderErr(w, problems.NotFound())
+			return
+		}
+
 		InternalError(w, r, fmt.Errorf("failed to get account: %w", err))
 		return
 	}
@@ -80,10 +86,14 @@ func (c *Main) AccountPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = &views.Account{
+	viewData := &views.Account{
 		Account:      account,
 		Transactions: transactions,
 	}
 
-
+	if err := Templates(r).ExecuteTemplate(w, views.AccountTemplateName, viewData); err != nil {
+		Log(r).WithError(err).Error("failed to execute template")
+		ape.RenderErr(w, problems.InternalError())
+		return
+	}
 }

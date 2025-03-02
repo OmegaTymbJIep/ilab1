@@ -23,7 +23,5 @@ func router(log *logan.Entry, svc IService) chi.Router {
 		),
 	)
 
-	r.Route("/api/v1", func(r chi.Router) {})
-
 	return r
 }

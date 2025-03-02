@@ -8,6 +8,9 @@ db:
 mvc:
   templates_dir: ./internal/service/mvc/views/templates
 
+atm:
+  public_key: ./atm_signing_key.pub.dev
+
 jwt:
   signing_key_path: ./jwt_signing_key.dev
   expiry: 3600s

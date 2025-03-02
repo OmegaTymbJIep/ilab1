@@ -57,7 +57,8 @@ func (c *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if errors.Is(err, models.ErrorInvalidPassword) {
-			Unauthorized(w, r, fmt.Errorf("invalid password"))
+			Log(r).WithError(err).Debug("unauthorized")
+			ape.RenderErr(w, problems.Unauthorized())
 			return
 		}
 

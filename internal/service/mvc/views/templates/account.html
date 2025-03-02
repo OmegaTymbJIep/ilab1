@@ -339,6 +339,19 @@
             transition-property: width;
             transition-timing-function: linear;
         }
+        .more-button {
+            background-color: var(--button-color, rgba(0, 0, 0, 0.2));
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .more-button:hover {
+            background-color: var(--button-hover-color, rgba(0, 0, 0, 0.35));
+        }
     </style>
 </head>
 <body>
@@ -417,16 +430,25 @@
 
 <div class="account-details">
     <div class="account-header" id="accountHeader" data-account-id="{{.Account.ID}}">
-        <h2>{{.Account.Name}}</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>{{.Account.Name}}</h2>
+            <button onclick="showModal('accountDetailsModal')" class="more-button">More</button>
+        </div>
+    </div>
+
+    <div id="accountDetailsModal" class="modal">
+        <div class="modal-content">
+            <h3>Account Details</h3>
+            <p><strong>Created:</strong> {{.Account.CreatedAt.Format "Jan 02, 2006 15:04:05"}}</p>
+            <p><strong>Last Updated:</strong> {{.Account.UpdatedAt.Format "Jan 02, 2006 15:04:05"}}</p>
+            <div>
+                <button type="button" class="cancel-btn" onclick="closeModal('accountDetailsModal')">Close</button>
+            </div>
+        </div>
     </div>
 
     <div class="account-balance">
         Balance: <span id="accountBalance">{{.Account.Balance}}</span>
-    </div>
-
-    <div class="account-info">
-        <p><strong>Created:</strong> {{.Account.CreatedAt.Format "Jan 02, 2006 15:04:05"}}</p>
-        <p><strong>Last Updated:</strong> {{.Account.UpdatedAt.Format "Jan 02, 2006 15:04:05"}}</p>
     </div>
 
     <div class="account-actions">
@@ -544,11 +566,39 @@
         }, 500); // This timeout matches the CSS transition duration
     }
 
+    function updateMoreButtonColor() {
+        var accountHeader = document.getElementById('accountHeader');
+        var moreButton = accountHeader.querySelector('.more-button');
+
+        // Get the computed background color of the account header
+        var headerColor = window.getComputedStyle(accountHeader).backgroundColor;
+
+        // Parse the RGB values
+        var rgbValues = headerColor.match(/\d+/g);
+        if (rgbValues && rgbValues.length >= 3) {
+            var r = parseInt(rgbValues[0]);
+            var g = parseInt(rgbValues[1]);
+            var b = parseInt(rgbValues[2]);
+
+            // Make the color darker by reducing RGB values by 20%
+            r = Math.floor(r * 0.8);
+            g = Math.floor(g * 0.8);
+            b = Math.floor(b * 0.8);
+
+            // Apply the darker color to the button
+            moreButton.style.setProperty('--button-color', `rgb(${r}, ${g}, ${b})`);
+            moreButton.style.setProperty('--button-hover-color', `rgb(${Math.floor(r * 0.7)}, ${Math.floor(g * 0.7)}, ${Math.floor(b * 0.7)})`);
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         // Set header color based on account ID
         var accountHeader = document.getElementById('accountHeader');
         var accountId = accountHeader.getAttribute('data-account-id');
         accountHeader.style.backgroundColor = hashToHSL(accountId);
+
+        // Update the more button color
+        updateMoreButtonColor();
     });
 
     function hashToHSL(str) {
