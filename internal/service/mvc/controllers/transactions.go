@@ -34,13 +34,17 @@ func (c *Transactions) DepositFunds(w http.ResponseWriter, r *http.Request) {
 
 	newBalance, err := c.model.DepositFunds(CustomerID(r), req)
 	switch {
+	case errors.Is(err, models.ErrorInvalidATMSignature):
+		Log(r).WithField("reason", err).Debug("bad request")
+		ape.RenderErr(w, requests.BadRequest(models.ErrorInvalidATMSignature)...)
+		return
 	case errors.Is(err, models.ErrorAccountNotFound):
 		Log(r).WithField("reason", err).Debug("not found")
 		ape.RenderErr(w, problems.NotFound())
 		return
 	case errors.Is(err, models.ErrorATMSignatureNotUnique):
 		Log(r).WithField("reason", err).Debug("bad request")
-		ape.RenderErr(w, requests.BadRequest(fmt.Errorf("ATM signature not unique"))...)
+		ape.RenderErr(w, requests.BadRequest(models.ErrorATMSignatureNotUnique)...)
 		return
 	case err != nil:
 		InternalError(w, r, fmt.Errorf("failed to deposit funds: %w", err))

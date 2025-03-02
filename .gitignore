@@ -9,3 +9,5 @@ vendor/
 *.dev
 *.dev.*
 dev.*
+
+signtx

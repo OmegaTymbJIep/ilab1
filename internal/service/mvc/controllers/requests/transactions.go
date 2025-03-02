@@ -9,9 +9,9 @@ import (
 )
 
 type Deposit struct {
-	AccountID    uuid.UUID `json:"account_id" validate:"required"`
+	AccountID    uuid.UUID `json:"account_id" validate:"required,uuid4"`
 	Amount       uint      `json:"amount" validate:"required,gt=0"`
-	ATMSignature string    `json:"atm_signature" validate:"required"`
+	ATMSignature string    `json:"atm_signature" validate:"required,max=100"`
 }
 
 func NewDeposit(r *http.Request) (*Deposit, error) {

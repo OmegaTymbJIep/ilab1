@@ -1,8 +1,14 @@
 package models
 
 import (
+	"crypto/ecdsa"
+	"crypto/sha256"
+	"encoding/asn1"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/google/uuid"
@@ -14,14 +20,17 @@ import (
 var ErrorInsufficientFunds = errors.New("insufficient funds")
 var ErrorRecipientNotFound = errors.New("recipient account not found")
 var ErrorATMSignatureNotUnique = errors.New("ATM signature not unique")
+var ErrorInvalidATMSignature = errors.New("invalid ATM signature")
 
 type Transactions struct {
-	db data.MainQ
+	db           data.MainQ
+	atmPublicKey *ecdsa.PublicKey
 }
 
-func NewTransactions(db data.MainQ) *Transactions {
+func NewTransactions(db data.MainQ, atmPublicKey *ecdsa.PublicKey) *Transactions {
 	return &Transactions{
-		db: db,
+		db:           db,
+		atmPublicKey: atmPublicKey,
 	}
 }
 
@@ -32,6 +41,15 @@ func (m *Transactions) DepositFunds(customerID uuid.UUID, req *requests.Deposit)
 	}
 	if !ok {
 		return 0, ErrorAccountNotFound
+	}
+
+	ok, err = m.verifySignature(&SignedTransaction{
+		AccountID: req.AccountID.String(),
+		Amount:    req.Amount,
+		Signature: req.ATMSignature,
+	})
+	if !ok || err != nil {
+		return 0, ErrorInvalidATMSignature
 	}
 
 	var newBalance int
@@ -182,6 +200,43 @@ func (m *Transactions) TransferFunds(customerID uuid.UUID, req *requests.Transfe
 	})
 
 	return senderBalance, err
+}
+
+type SignedTransaction struct {
+	AccountID string `json:"account_id"`
+	Amount    uint   `json:"amount"`
+	Signature string `json:"-"`
+}
+
+type ECDSASignature struct {
+	R, S *big.Int
+}
+
+// verifySignature verifies the signature of a signed transaction
+func (m *Transactions) verifySignature(signedTx *SignedTransaction) (bool, error) {
+	// Marshal the transaction to JSON
+	txJSON, err := json.Marshal(signedTx)
+	if err != nil {
+		return false, fmt.Errorf("error marshaling transaction: %v", err)
+	}
+
+	// Calculate SHA-256 hash of the JSON
+	hash := sha256.Sum256(txJSON)
+
+	// Decode the signature from Base64
+	signatureBytes, err := base64.StdEncoding.DecodeString(signedTx.Signature)
+	if err != nil {
+		return false, fmt.Errorf("error decoding signature: %v", err)
+	}
+
+	// Unmarshal the signature
+	var signature ECDSASignature
+	if _, err := asn1.Unmarshal(signatureBytes, &signature); err != nil {
+		return false, fmt.Errorf("error unmarshaling signature: %v", err)
+	}
+
+	// Verify the signature
+	return ecdsa.Verify(m.atmPublicKey, hash[:], signature.R, signature.S), nil
 }
 
 func isATMNotUniqueError(err error) bool {

@@ -37,7 +37,7 @@ CREATE TABLE transactions (
     sender_fkey UUID REFERENCES accounts(id),
     recipient_fkey UUID REFERENCES accounts(id),
     amount BIGINT NOT NULL,
-    atm_signature CHAR(64) NOT NULL UNIQUE,
+    atm_signature CHAR(100) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CHECK (

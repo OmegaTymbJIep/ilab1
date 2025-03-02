@@ -672,10 +672,10 @@
             .then(async response => {
                 if (response.status === 400) {
                     const errorData = await response.json();
-                    if (errorData.errors[0].detail.includes('signature')) {
+                    if (errorData.errors[0].detail.includes('ATM signature not unique')) {
                         throw new Error('Deposit already submitted');
                     }
-                    throw new Error('Invalid amount');
+                    throw new Error(capitalize(errorData.errors[0].detail));
                 }
                 if (response.status === 401) throw new Error('Invalid ATM signature');
                 if (response.status === 404) throw new Error('Account not found');

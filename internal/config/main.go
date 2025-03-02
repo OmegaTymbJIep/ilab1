@@ -14,6 +14,7 @@ type Config interface {
 
 	MVC() *MVC
 	JWT() *JWT
+	ATM() *ATM
 	Listener() net.Listener
 }
 
@@ -24,6 +25,7 @@ type config struct {
 	listener comfig.Once
 	mvc      comfig.Once
 	jwt      comfig.Once
+	atm      comfig.Once
 
 	getter kv.Getter
 }
