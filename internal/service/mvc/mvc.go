@@ -62,12 +62,16 @@ func (m *MVC) Register(r chi.Router) {
 			r.Post("/register", m.auth.Register)
 		})
 
-		r.With(m.auth.VerifyJWT).Route("/", func(r chi.Router) {
-			r.Route("/account", func(r chi.Router) {
-				r.Get("/{account-id}", m.accounts.AccountPage)
+		r.Route("/", func(r chi.Router) {
+			r.Get("/home", controllers.Homepage)
+
+			r.With(m.auth.VerifyJWT).Route("/", func(r chi.Router) {
+				r.Route("/account", func(r chi.Router) {
+					r.Get("/{account-id}", m.accounts.AccountPage)
+				})
+				r.Get("/logout", controllers.LogOut)
+				r.Get("/", m.accounts.AccountListPage)
 			})
-			r.Get("/logout", controllers.LogOut)
-			r.Get("/", m.accounts.AccountListPage)
 		})
 
 		r.With(m.auth.VerifyJWT).Route("/api/v1", func(r chi.Router) {

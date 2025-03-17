@@ -174,6 +174,7 @@
             color: #FF9800;
         }
         .transaction-amount {
+            min-width: 80px;
             font-weight: bold;
         }
         .back-link {
@@ -368,7 +369,9 @@
 <div id="alert-container"></div>
 
 <div class="header">
-    <h1>Lab 1</h1>
+    <a href="/home" style="text-decoration: none; color: inherit;">
+        <h1>Lab 1</h1>
+    </a>
     <div class="right-buttons">
         <button onclick="showInfoModal()" class="info-modal-button">Info</button>
         <button onclick="logout()">Log Out</button>
@@ -392,7 +395,7 @@
     <div class="modal-content">
         <h3>Deposit Funds</h3>
         <form id="depositForm" onsubmit="return handleDeposit(event)">
-            <input type="number" id="depositAmount" placeholder="Amount" min="1" required />
+            <input type="number" id="depositAmount" placeholder="Amount" min="0.01" step="0.01" required />
             <input type="text" id="depositSignature" placeholder="ATM Signature" required />
             <div>
                 <button type="submit" class="submit-btn">Deposit</button>
@@ -407,7 +410,7 @@
     <div class="modal-content">
         <h3>Withdraw Funds</h3>
         <form id="withdrawForm" onsubmit="return handleWithdraw(event)">
-            <input type="number" id="withdrawAmount" placeholder="Amount" min="1" required />
+            <input type="number" id="withdrawAmount" placeholder="Amount" min="0.01" step="0.01" required />
             <div>
                 <button type="submit" class="submit-btn">Withdraw</button>
                 <button type="button" class="cancel-btn" onclick="closeModal('withdrawModal')">Cancel</button>
@@ -421,7 +424,7 @@
     <div class="modal-content">
         <h3>Transfer Funds</h3>
         <form id="transferForm" onsubmit="return handleTransfer(event)">
-            <input type="number" id="transferAmount" placeholder="Amount" min="1" required />
+            <input type="number" id="transferAmount" placeholder="Amount" min="0.01" step="0.01" required />
             <input type="text" id="transferRecipient" placeholder="Recipient Account ID" required />
             <div>
                 <button type="submit" class="submit-btn">Transfer</button>
@@ -459,7 +462,7 @@
     </div>
 
     <div class="account-balance">
-        Balance: <span id="accountBalance">{{.Account.Balance}}</span>
+        Balance: $<span id="accountBalance">{{.Account.Balance}}</span>
     </div>
 
     <div class="account-actions">
@@ -603,6 +606,8 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
+        formatAllMoneyValues();
+
         // Set header color based on account ID
         var accountHeader = document.getElementById('accountHeader');
         var accountId = accountHeader.getAttribute('data-account-id');
@@ -661,9 +666,33 @@
             });
     }
 
+    // Format cents value to dollars with 2 decimal places
+    function formatDollar(cents) {
+        return (cents / 100).toFixed(2);
+    }
+
+    // Function to format all money amounts on the page
+    function formatAllMoneyValues() {
+        // Format account balance
+        const balanceElement = document.getElementById('accountBalance');
+        balanceElement.textContent = formatDollar(parseInt(balanceElement.textContent));
+
+        // Format transaction amounts
+        const amountElements = document.querySelectorAll('.transaction-amount');
+        amountElements.forEach(element => {
+            const text = element.textContent.trim();
+            const isPositive = text.startsWith('+');
+            const amountText = text.replace(/[^0-9]/g, '');
+            if (amountText) {
+                const prefix = isPositive ? '+ $' : '- $';
+                element.textContent = prefix + formatDollar(parseInt(amountText));
+            }
+        });
+    }
+
     function handleDeposit(event) {
         event.preventDefault();
-        const amount = document.getElementById('depositAmount').value;
+        const amountInput = document.getElementById('depositAmount').value;
         const signature = document.getElementById('depositSignature').value;
 
         if (!signature.trim()) {
@@ -671,12 +700,15 @@
             return false;
         }
 
+        // Convert the amount to cents (multiply by 100)
+        const amount = Math.round(parseFloat(amountInput) * 100);
+
         fetch('/api/v1/transactions/deposit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 account_id: '{{.Account.ID}}',
-                amount: parseInt(amount),
+                amount: amount,
                 atm_signature: signature
             })
         })
@@ -694,7 +726,8 @@
                 return response.json();
             })
             .then(data => {
-                document.getElementById('accountBalance').textContent = data.new_balance;
+                // Format the balance as dollars and cents
+                document.getElementById('accountBalance').textContent = formatDollar(data.new_balance);
                 showAlert('Deposit successful', 'success');
                 closeModal('depositModal');
                 setTimeout(() => window.location.reload(), 1000);
@@ -707,14 +740,17 @@
 
     function handleWithdraw(event) {
         event.preventDefault();
-        const amount = document.getElementById('withdrawAmount').value;
+        const amountInput = document.getElementById('withdrawAmount').value;
+
+        // Convert the amount to cents (multiply by 100)
+        const amount = Math.round(parseFloat(amountInput) * 100);
 
         fetch('/api/v1/transactions/withdraw', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 account_id: '{{.Account.ID}}',
-                amount: parseInt(amount)
+                amount: amount
             })
         })
             .then(response => {
@@ -725,7 +761,8 @@
                 return response.json();
             })
             .then(data => {
-                document.getElementById('accountBalance').textContent = data.new_balance;
+                // Format the balance as dollars and cents
+                document.getElementById('accountBalance').textContent = formatDollar(data.new_balance);
                 showAlert('Withdrawal successful', 'success');
                 closeModal('withdrawModal');
                 setTimeout(() => window.location.reload(), 1000);
@@ -738,7 +775,7 @@
 
     function handleTransfer(event) {
         event.preventDefault();
-        const amount = document.getElementById('transferAmount').value;
+        const amountInput = document.getElementById('transferAmount').value;
         const recipient = document.getElementById('transferRecipient').value;
 
         if (!recipient.trim()) {
@@ -746,13 +783,16 @@
             return false;
         }
 
+        // Convert the amount to cents (multiply by 100)
+        const amount = Math.round(parseFloat(amountInput) * 100);
+
         fetch('/api/v1/transactions/transfer', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 sender_id: '{{.Account.ID}}',
                 recipient_id: recipient,
-                amount: parseInt(amount)
+                amount: amount
             })
         })
             .then(async response => {
@@ -767,7 +807,8 @@
                 return response.json();
             })
             .then(data => {
-                document.getElementById('accountBalance').textContent = data.new_balance;
+                // Format the balance as dollars and cents
+                document.getElementById('accountBalance').textContent = formatDollar(data.new_balance);
                 showAlert('Transfer successful', 'success');
                 closeModal('transferModal');
                 setTimeout(() => window.location.reload(), 1000);
@@ -803,6 +844,12 @@
 
     function capitalize(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Helper function to format amount as dollars and cents
+    function formatDollar(amount) {
+        // Division by 100 to convert from cents to dollars
+        return (amount / 100).toFixed(2);
     }
 </script>
 </body>

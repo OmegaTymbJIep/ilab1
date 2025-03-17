@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banking System - Home</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            color: black;
+            padding: 10px 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header-right {
+            display: flex;
+            gap: 15px;
+        }
+        .auth-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        .auth-button:hover {
+            background-color: #0056b3;
+        }
+        .info-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .info-button:hover {
+            background-color: #5a6268;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(to right, #008080, #4CAF50);
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .hero h2 {
+            font-size: 36px;
+            margin: 0 0 20px 0;
+        }
+        .hero p {
+            font-size: 18px;
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 60px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .features h2 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .feature-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+        }
+        .feature-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 300px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        .feature-card h3 {
+            margin: 0 0 15px 0;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        .footer p {
+            margin: 0;
+        }
+
+        /* Modal Styles */
+        .modal,
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .modal-content {
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            background-color: #fff;
+            text-align: left;
+        }
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .close-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .close-button:hover {
+            background-color: #c9302c;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <a href="/" style="text-decoration: none; color: inherit;">
+        <h1>Lab 1 - Banking System</h1>
+    </a>
+    <div class="header-right">
+        <button class="info-button" onclick="showInfoModal()">Info</button>
+        <a href="/auth" class="auth-button">Sign In</a>
+    </div>
+</div>
+
+<div class="hero">
+    <h2>Secure and Simple Banking</h2>
+    <p>Manage your accounts, transfer funds, and track your transaction history with our easy-to-use banking system.</p>
+    <a href="/auth" class="auth-button">Get Started</a>
+</div>
+
+<div class="features">
+    <h2>Features</h2>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">💼</div>
+            <h3>Account Management</h3>
+            <p>Create and manage multiple accounts to organize your finances effectively.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💸</div>
+            <h3>Easy Transfers</h3>
+            <p>Transfer funds between accounts with just a few clicks.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Transaction History</h3>
+            <p>View your complete transaction history with detailed information.</p>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <p>© 2025 Banking System | K-25 | Levochko Anton</p>
+</div>
+
+<div id="modalOverlay" class="modal-overlay"></div>
+
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <h2>Student Information</h2>
+        <p><strong>Name:</strong> Levochko Anton</p>
+        <p><strong>Group:</strong> K-25</p>
+        <p><strong>Date:</strong> 2025</p>
+        <button class="close-button" onclick="closeInfoModal()">Close</button>
+    </div>
+</div>
+
+<script>
+    function showInfoModal() {
+        document.getElementById("modalOverlay").style.display = "block";
+        document.getElementById("infoModal").style.display = "block";
+    }
+
+    function closeInfoModal() {
+        document.getElementById("modalOverlay").style.display = "none";
+        document.getElementById("infoModal").style.display = "none";
+    }
+</script>
+</body>
+</html>

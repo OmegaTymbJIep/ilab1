@@ -288,7 +288,9 @@
 <div id="alert-container"></div>
 
 <div class="header">
-    <h1>Lab 1</h1>
+    <a href="/home" style="text-decoration: none; color: inherit;">
+        <h1>Lab 1</h1>
+    </a>
     <div class="right-buttons">
         <button onclick="showInfoModal()" class="info-modal-button">Info</button>
         <button onclick="logout()">Log Out</button>
@@ -317,7 +319,7 @@
                 <h3>{{.Name}}</h3>
             </div>
             <div class="account-body">
-                <p><strong>Balance:</strong> {{.Balance}}</p>
+                <p><strong>Balance:</strong> $<span class="account-balance-value">{{.Balance}}</span></p>
             </div>
         </div>
     </a>
@@ -404,6 +406,8 @@
 
     // Set header colors and add event listener for create account card
     document.addEventListener("DOMContentLoaded", function () {
+        formatAllBalanceValues();
+
         var headers = document.querySelectorAll('.account-header');
         headers.forEach(function (header) {
             var accountId = header.getAttribute('data-account-id');
@@ -458,7 +462,7 @@
                     '<h3>' + data.name + '</h3>' +
                     '</div>' +
                     '<div class="account-body">' +
-                    '<p><strong>Balance:</strong> ' + data.balance + '</p>' +
+                    '<p><strong>Balance:</strong> $<span class="account-balance-value">' + formatDollar(data.balance) + '</span></p>' +
                     '</div>' +
                     '</div>';
                 var createCard = document.getElementById("createAccountCard");
@@ -506,6 +510,19 @@
                 showAlert("Error during logout", 'error');
                 console.error(error);
             });
+    }
+
+    // Format cents value to dollars with 2 decimal places
+    function formatDollar(cents) {
+        return (cents / 100).toFixed(2);
+    }
+
+    // Function to format all balance values on the page
+    function formatAllBalanceValues() {
+        const balanceElements = document.querySelectorAll('.account-balance-value');
+        balanceElements.forEach(element => {
+            element.textContent = formatDollar(parseInt(element.textContent));
+        });
     }
 
     function showInfoModal() {
