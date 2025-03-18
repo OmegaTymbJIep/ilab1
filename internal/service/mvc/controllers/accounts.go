@@ -125,3 +125,33 @@ func (c *Accounts) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (c *Accounts) GenerateAccountExcel(w http.ResponseWriter, r *http.Request) {
+	accountIDRaw := r.PathValue("account-id")
+	accountID, err := uuid.Parse(accountIDRaw)
+	if err != nil {
+		Log(r).WithField("reason", err).Debug("bad request")
+		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid account id"))...)
+		return
+	}
+
+	excelReport, err := c.model.GenerateExcelReport(CustomerID(r), accountID)
+	if err != nil {
+		if errors.Is(err, models.ErrorAccountNotFound) {
+			ape.RenderErr(w, problems.NotFound())
+			return
+		}
+
+		InternalError(w, r, fmt.Errorf("failed to get account: %w", err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition",
+		fmt.Sprintf("attachment; filename=account_%s_report.xlsx", accountID.String()))
+
+	if _, err = w.Write(excelReport); err != nil {
+		InternalError(w, r, fmt.Errorf("failed to write Excel file: %w", err))
+		return
+	}
+}

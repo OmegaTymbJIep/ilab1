@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/xuri/excelize/v2"
 
 	"github.com/omegatymbjiep/ilab1/internal/data"
 	"github.com/omegatymbjiep/ilab1/internal/service/mvc/controllers/requests"
+	"github.com/omegatymbjiep/ilab1/internal/service/mvc/models/report"
 )
 
 var ErrorNonZeroBalance = errors.New("account with non-zero balance")
@@ -127,4 +129,40 @@ func (m *Accounts) DeleteAccount(customerID, accountID uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (m *Accounts) GenerateExcelReport(customerID, accountID uuid.UUID) ([]byte, error) {
+	account, err := m.GetAccount(customerID, accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	transactions, err := m.GetAccountTransactions(customerID, accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	f := excelize.NewFile()
+
+	styles, err := report.CreateExcelStyles(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create styles: %w", err)
+	}
+
+	err = report.CreateAccountSummarySheet(f, account, transactions, styles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create account summary sheet: %w", err)
+	}
+
+	err = report.CreateTransactionHistorySheet(f, account, transactions, styles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create transaction history sheet: %w", err)
+	}
+
+	reportBuf, err := f.WriteToBuffer()
+	if err != nil {
+		return nil, fmt.Errorf("failed to write to buffer: %w", err)
+	}
+
+	return reportBuf.Bytes(), nil
 }

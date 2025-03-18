@@ -83,6 +83,7 @@ func (m *MVC) Register(r chi.Router) {
 			r.Route("/accounts", func(r chi.Router) {
 				r.Post("/", m.accounts.CreateAccount)
 				r.Delete("/{account-id}", m.accounts.DeleteAccount)
+				r.Get("/{account-id}/excel", m.accounts.GenerateAccountExcel)
 			})
 		})
 	})
