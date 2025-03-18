@@ -248,9 +248,9 @@ func CreateTransactionHistorySheet(f *excelize.File, account *data.Account, tran
 		// Set amount with sign
 		var amount float64
 		if tx.Type == data.DepositTransaction || (tx.Type == data.TransferTransaction && tx.Recipient == account.ID) {
-			amount = float64(tx.Amount) / 100.0 // Positive
+			amount = float64(tx.Amount) / 100.0
 		} else {
-			amount = -float64(tx.Amount) / 100.0 // Negative
+			amount = -float64(tx.Amount) / 100.0
 		}
 
 		// Add transaction row
@@ -268,7 +268,7 @@ func CreateTransactionHistorySheet(f *excelize.File, account *data.Account, tran
 		colName := string(col)
 		width := 20.0
 		if col == 'E' {
-			width = 30.0 // Make details column wider
+			width = 55.0 // Make details column wider
 		}
 		if err := f.SetColWidth(sheetName, colName, colName, width); err != nil {
 			return fmt.Errorf("failed to set column width: %w", err)
@@ -327,10 +327,7 @@ func formatTransactionTypeAndDetails(account *data.Account, tx *data.Transaction
 	switch tx.Type {
 	case data.DepositTransaction:
 		txType = "Deposit"
-		details = "Deposit to account"
-		if tx.ATMSignature != "" {
-			details += " (ATM transaction)"
-		}
+		details = "Deposit to account (ATM transaction)"
 	case data.WithdrawalTransaction:
 		txType = "Withdrawal"
 		details = "Withdrawal from account"
