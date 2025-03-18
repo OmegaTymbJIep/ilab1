@@ -58,7 +58,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
+            max-width: 900px;
             text-align: left;
         }
         .account-header {
@@ -174,7 +174,7 @@
             color: #FF9800;
         }
         .transaction-amount {
-            min-width: 80px;
+            min-width: 100px;
             font-weight: bold;
         }
         .back-link {
@@ -373,6 +373,66 @@
         .modal-content button.excel-report:hover {
             background-color: #0062c7;
         }
+        .statistics-section {
+            margin-top: 30px;
+            padding: 0 20px;
+        }
+
+        .statistics-section h3 {
+            text-align: left;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .statistics-section h3.collapsible-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .toggle-icon {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .charts-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            transition: max-height 0.3s ease;
+            overflow: hidden;
+            max-height: 800px; /* Arbitrary large value */
+        }
+        .charts-container.hidden {
+            max-height: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        .chart-wrapper {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chart-wrapper h4 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 768px) {
+            .chart-wrapper {
+                flex: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -482,6 +542,27 @@
         <button onclick="showModal('transferModal')" class="transfer">Transfer</button>
     </div>
 
+    <div class="statistics-section">
+        <h3 class="collapsible-header">
+            Account Statistics
+            <span class="toggle-icon">▼</span>
+        </h3>
+        <div class="charts-container" id="chartsContainer">
+            <div class="chart-wrapper">
+                <h4>Transaction Distribution</h4>
+                <canvas id="transactionTypeChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <h4>Monthly Activity</h4>
+                <canvas id="monthlyActivityChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <h4>Income vs. Expenses</h4>
+                <canvas id="balanceFlowChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     <div class="transactions">
         <h3>Transaction History</h3>
         <table class="transactions-table">
@@ -543,6 +624,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
     function showAlert(message, type = 'note', duration = 3000) {
         // Create the alert element
@@ -631,6 +713,32 @@
 
         // Update the more button color
         updateMoreButtonColor();
+
+        // Initialize charts if there are transactions
+        if (document.querySelectorAll('.transactions-table tbody tr').length > 0 &&
+            !document.querySelector('.transactions-table tbody tr td[colspan]')) {
+            initializeCharts();
+        }
+
+        // Add click handler for collapsible section
+        var statisticsHeader = document.querySelector('.collapsible-header');
+        var chartsContainer = document.getElementById('chartsContainer');
+
+        if (statisticsHeader) {
+            statisticsHeader.addEventListener('click', function() {
+                this.classList.toggle('collapsed');
+                chartsContainer.classList.toggle('hidden');
+
+                // Save state to localStorage
+                localStorage.setItem('statsCollapsed', this.classList.contains('collapsed'));
+            });
+
+            // Restore previous state from localStorage
+            if (localStorage.getItem('statsCollapsed') === 'true') {
+                statisticsHeader.classList.add('collapsed');
+                chartsContainer.classList.add('hidden');
+            }
+        }
     });
 
     function hashToHSL(str) {
@@ -866,6 +974,342 @@
     function formatDollar(amount) {
         // Division by 100 to convert from cents to dollars
         return (amount / 100).toFixed(2);
+    }
+    function initializeCharts() {
+        createTransactionTypeChart();
+        createMonthlyActivityChart();
+        createBalanceFlowChart();
+    }
+
+    function createTransactionTypeChart() {
+        // Get transaction data from the page
+        const transactions = parseTransactionsFromTable();
+
+        // Calculate counts for each transaction type
+        let depositsCount = 0;
+        let withdrawalsCount = 0;
+        let transfersInCount = 0;
+        let transfersOutCount = 0;
+
+        // Calculate total amounts for each transaction type
+        let depositsAmount = 0;
+        let withdrawalsAmount = 0;
+        let transfersInAmount = 0;
+        let transfersOutAmount = 0;
+
+        transactions.forEach(tx => {
+            switch(tx.type) {
+                case 'Deposit':
+                    depositsCount++;
+                    depositsAmount += tx.amount;
+                    break;
+                case 'Withdrawal':
+                    withdrawalsCount++;
+                    withdrawalsAmount += Math.abs(tx.amount);
+                    break;
+                case 'Transfer In':
+                    transfersInCount++;
+                    transfersInAmount += tx.amount;
+                    break;
+                case 'Transfer Out':
+                    transfersOutCount++;
+                    transfersOutAmount += Math.abs(tx.amount);
+                    break;
+            }
+        });
+
+        // Create pie chart for transaction counts
+        const typeCtx = document.getElementById('transactionTypeChart').getContext('2d');
+        new Chart(typeCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Deposits', 'Withdrawals', 'Transfers In', 'Transfers Out'],
+                datasets: [{
+                    data: [depositsCount, withdrawalsCount, transfersInCount, transfersOutCount],
+                    backgroundColor: [
+                        'rgba(76, 175, 80, 0.8)',   // Green for deposits
+                        'rgba(244, 67, 54, 0.8)',   // Red for withdrawals
+                        'rgba(33, 150, 243, 0.8)',  // Blue for transfers in
+                        'rgba(255, 152, 0, 0.8)'    // Orange for transfers out
+                    ],
+                    borderColor: [
+                        'rgba(76, 175, 80, 1)',
+                        'rgba(244, 67, 54, 1)',
+                        'rgba(33, 150, 243, 1)',
+                        'rgba(255, 152, 0, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: false, // Disable animations
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const dataset = context.dataset;
+                                const total = dataset.data.reduce((acc, data) => acc + data, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createMonthlyActivityChart() {
+        // Get transaction data and organize by month
+        const transactions = parseTransactionsFromTable();
+        const monthlyData = groupTransactionsByMonth(transactions);
+
+        // Prepare data for the chart
+        const months = Object.keys(monthlyData).sort();
+        const netFlowData = [];
+
+        months.forEach(month => {
+            const data = monthlyData[month];
+            const netFlow = data.depositsAmount + data.transfersInAmount -
+                data.withdrawalsAmount - data.transfersOutAmount;
+            netFlowData.push(netFlow);
+        });
+
+        // Format month labels
+        const monthLabels = formatMonthLabels(months);
+
+        // Create the line chart
+        const activityCtx = document.getElementById('monthlyActivityChart').getContext('2d');
+        new Chart(activityCtx, {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Net Flow',
+                    data: netFlowData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: false, // Disable animations
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: 'USD'
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createBalanceFlowChart() {
+        // Get transaction data and organize by month
+        const transactions = parseTransactionsFromTable();
+        const monthlyData = groupTransactionsByMonth(transactions);
+
+        // Prepare data for the chart
+        const months = Object.keys(monthlyData).sort();
+        const incomeData = [];
+        const expenseData = [];
+
+        months.forEach(month => {
+            const data = monthlyData[month];
+            const income = data.depositsAmount + data.transfersInAmount;
+            const expenses = data.withdrawalsAmount + data.transfersOutAmount;
+
+            incomeData.push(income);
+            expenseData.push(expenses);
+        });
+
+        // Format month labels
+        const monthLabels = formatMonthLabels(months);
+
+        // Create the bar chart
+        const flowCtx = document.getElementById('balanceFlowChart').getContext('2d');
+        new Chart(flowCtx, {
+            type: 'bar',
+            data: {
+                labels: monthLabels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomeData,
+                        backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                        borderColor: 'rgba(76, 175, 80, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Expenses',
+                        data: expenseData,
+                        backgroundColor: 'rgba(244, 67, 54, 0.7)',
+                        borderColor: 'rgba(244, 67, 54, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                animation: false, // Disable animations
+                scales: {
+                    x: {
+                        stacked: false
+                    },
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: 'USD'
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Format month labels (e.g., "2023-01" to "Jan 2023")
+    function formatMonthLabels(months) {
+        return months.map(month => {
+            const [year, monthNum] = month.split('-');
+            const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+            return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        });
+    }
+
+    function parseTransactionsFromTable() {
+        const transactions = [];
+        const table = document.querySelector('.transactions-table');
+        const rows = table.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            // Skip rows that don't have data cells (like "No transactions yet" row)
+            if (cells.length >= 4 && !row.querySelector('td[colspan]')) {
+                const dateText = cells[0].textContent.trim();
+                const typeText = cells[1].textContent.trim();
+                const detailsText = cells[2].textContent.trim();
+                const amountText = cells[3].textContent.trim();
+
+                // Parse amount, handling +/- prefixes and currency symbols
+                let amount = 0;
+                try {
+                    // Remove currency symbols and commas, then parse
+                    const numericPart = amountText.replace(/[^0-9.-]/g, '');
+                    amount = parseFloat(numericPart);
+
+                    // If it has a minus or starts with "-", it's negative
+                    if (amountText.includes('-') || amountText.trim().startsWith('-')) {
+                        amount = -Math.abs(amount);
+                    }
+                } catch (e) {
+                    console.error("Error parsing amount:", amountText, e);
+                }
+
+                transactions.push({
+                    date: new Date(dateText),
+                    type: typeText,
+                    details: detailsText,
+                    amount: amount
+                });
+            }
+        });
+
+        return transactions;
+    }
+
+    function groupTransactionsByMonth(transactions) {
+        const monthlyData = {};
+
+        transactions.forEach(tx => {
+            const date = tx.date;
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+            if (!monthlyData[monthKey]) {
+                monthlyData[monthKey] = {
+                    depositsCount: 0,
+                    withdrawalsCount: 0,
+                    transfersInCount: 0,
+                    transfersOutCount: 0,
+                    depositsAmount: 0,
+                    withdrawalsAmount: 0,
+                    transfersInAmount: 0,
+                    transfersOutAmount: 0
+                };
+            }
+
+            const data = monthlyData[monthKey];
+
+            switch(tx.type) {
+                case 'Deposit':
+                    data.depositsCount++;
+                    data.depositsAmount += tx.amount;
+                    break;
+                case 'Withdrawal':
+                    data.withdrawalsCount++;
+                    data.withdrawalsAmount += Math.abs(tx.amount);
+                    break;
+                case 'Transfer In':
+                    data.transfersInCount++;
+                    data.transfersInAmount += tx.amount;
+                    break;
+                case 'Transfer Out':
+                    data.transfersOutCount++;
+                    data.transfersOutAmount += Math.abs(tx.amount);
+                    break;
+            }
+        });
+
+        return monthlyData;
     }
 </script>
 </body>
