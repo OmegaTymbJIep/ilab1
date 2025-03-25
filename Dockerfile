@@ -1,12 +1,11 @@
-FROM golang:1.20-alpine as buildbase
+FROM golang:1.23-alpine as buildbase
 
 RUN apk add git build-base
 
 WORKDIR /go/src/github.com/omegatymbjiep/ilab1
-COPY vendor .
 COPY . .
 
-RUN GOOS=linux go build  -o /usr/local/bin/ilab1 /go/src/github.com/omegatymbjiep/ilab1
+RUN GOOS=linux go build  -o /usr/local/bin/ilab1 /go/src/github.com/omegatymbjiep/ilab1/main.go
 
 
 FROM alpine:3.9

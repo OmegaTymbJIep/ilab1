@@ -3,17 +3,17 @@ log:
   disable_sentry: true
 
 db:
-  url: postgres://ilab1:ilab1@localhost:5432/ilab1?sslmode=disable
+  url: postgres://ilab1:ilab1@lab1db:5432/ilab1?sslmode=disable
 
 mvc:
-  templates_dir: ./internal/service/mvc/views/templates
+  templates_dir: /app/templates
 
 atm:
-  public_key_path: ./atm_signing_key.pub.dev
+  public_key_path: /app/atm_signing_key.pub.dev
 
 jwt:
-  signing_key_path: ./jwt_signing_key.dev
+  signing_key_path: /app/jwt_signing_key.dev
   expiry: 3600s
 
 listener:
-  addr: :8000
+  addr: :8080
