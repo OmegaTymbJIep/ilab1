@@ -38,11 +38,13 @@ func NewMVC(log *logan.Entry, cfg config.Config) (*MVC, error) {
 		return nil, fmt.Errorf("failed to init auth model: %w", err)
 	}
 
+	auditService := models.NewAuditService(db)
+
 	return &MVC{
 		log:          log,
 		auth:         controllers.NewAuth(authModel),
-		accounts:     controllers.NewAccounts(models.NewMain(db)),
-		transactions: controllers.NewTransactions(models.NewTransactions(db, cfg.ATM().PublicKey)),
+		accounts:     controllers.NewAccounts(models.NewAccounts(db, auditService)),
+		transactions: controllers.NewTransactions(models.NewTransactions(db, auditService, cfg.ATM().PublicKey)),
 		templates:    templates,
 	}, nil
 }

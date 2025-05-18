@@ -10,6 +10,7 @@ type MainQ interface {
 	Accounts() Accounts
 	CustomersAccounts() CustomersAccounts
 	Transactions() Transactions
+	AuditLogs() AuditLogs
 
 	Transaction(func() error) error
 	IsolatedTransaction(sql.IsolationLevel, func() error) error

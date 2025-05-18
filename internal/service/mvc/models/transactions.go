@@ -25,12 +25,14 @@ var ErrorInvalidATMSignature = errors.New("invalid ATM signature")
 type Transactions struct {
 	db           data.MainQ
 	atmPublicKey *ecdsa.PublicKey
+	auditService *AuditService
 }
 
-func NewTransactions(db data.MainQ, atmPublicKey *ecdsa.PublicKey) *Transactions {
+func NewTransactions(db data.MainQ, auditService *AuditService, atmPublicKey *ecdsa.PublicKey) *Transactions {
 	return &Transactions{
 		db:           db,
 		atmPublicKey: atmPublicKey,
+		auditService: auditService,
 	}
 }
 
@@ -84,6 +86,10 @@ func (m *Transactions) DepositFunds(customerID uuid.UUID, req *requests.Deposit)
 			return fmt.Errorf("failed to update account balance: %w", err)
 		}
 
+		if err = m.auditService.logDepositMade(customerID, account.ID, req.Amount); err != nil {
+			return fmt.Errorf("failed to log deposit: %w", err)
+		}
+
 		newBalance = account.Balance
 		return nil
 	})
@@ -130,6 +136,10 @@ func (m *Transactions) WithdrawFunds(customerID uuid.UUID, req *requests.Withdra
 
 		if err = m.db.Accounts().Update(account); err != nil {
 			return fmt.Errorf("failed to update account balance: %w", err)
+		}
+
+		if err = m.auditService.logWithdrawalMade(customerID, account.ID, req.Amount); err != nil {
+			return fmt.Errorf("failed to log withdrawal: %w", err)
 		}
 
 		newBalance = account.Balance
@@ -193,6 +203,10 @@ func (m *Transactions) TransferFunds(customerID uuid.UUID, req *requests.Transfe
 
 		if err = m.db.Accounts().Update(recipient); err != nil {
 			return fmt.Errorf("failed to update recipient balance: %w", err)
+		}
+
+		if err = m.auditService.logTransferMade(customerID, sender.ID, recipient.ID, req.Amount); err != nil {
+			return fmt.Errorf("failed to log transfer: %w", err)
 		}
 
 		senderBalance = sender.Balance

@@ -17,11 +17,14 @@ var ErrorAccountNotFound = errors.New("account not found")
 
 type Accounts struct {
 	db data.MainQ
+
+	auditService *AuditService
 }
 
-func NewMain(db data.MainQ) *Accounts {
+func NewAccounts(db data.MainQ, auditService *AuditService) *Accounts {
 	return &Accounts{
-		db: db,
+		db:           db,
+		auditService: auditService,
 	}
 }
 
@@ -36,9 +39,12 @@ func (m *Accounts) CreateAccount(customerID uuid.UUID, req *requests.CreateAccou
 			return fmt.Errorf("failed to insert account: %w", err)
 		}
 
-		err := m.db.CustomersAccounts().AddAccountsToCustomer(customerID, account.ID)
-		if err != nil {
+		if err := m.db.CustomersAccounts().AddAccountsToCustomer(customerID, account.ID); err != nil {
 			return fmt.Errorf("failed to add account to customer: %w", err)
+		}
+
+		if err := m.auditService.logAccountCreated(customerID, account.ID); err != nil {
+			return fmt.Errorf("failed to log audit action: %w", err)
 		}
 
 		return nil
@@ -126,6 +132,10 @@ func (m *Accounts) DeleteAccount(customerID, accountID uuid.UUID) error {
 			return fmt.Errorf("failed to delete account: %w", err)
 		}
 
+		if err = m.auditService.logAccountDeleted(customerID, accountID); err != nil {
+			return fmt.Errorf("failed to log audit action: %w", err)
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -166,6 +176,10 @@ func (m *Accounts) GenerateExcelReport(customerID, accountID uuid.UUID) ([]byte,
 	reportBuf, err := f.WriteToBuffer()
 	if err != nil {
 		return nil, fmt.Errorf("failed to write to buffer: %w", err)
+	}
+
+	if err = m.auditService.logExcelReportGenerated(customerID, accountID); err != nil {
+		return nil, fmt.Errorf("failed to log audit action: %w", err)
 	}
 
 	return reportBuf.Bytes(), nil

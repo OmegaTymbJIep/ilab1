@@ -38,6 +38,10 @@ func (q *mainQ) Transaction(fn func() error) error {
 	return q.db.Transaction(fn)
 }
 
+func (q *mainQ) AuditLogs() data.AuditLogs {
+	return NewAuditLogsQ(q.db)
+}
+
 func (q *mainQ) IsolatedTransaction(isolationLevel sql.IsolationLevel, fn func() error) error {
 	return q.db.TransactionWithOptions(&sql.TxOptions{Isolation: isolationLevel}, fn)
 }
