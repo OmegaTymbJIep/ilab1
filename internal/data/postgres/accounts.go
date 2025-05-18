@@ -10,6 +10,8 @@ import (
 
 const (
 	accountsTableName = "accounts"
+
+	isDeletedColumnName = "is_deleted"
 )
 
 type accountsQ struct {
@@ -24,5 +26,18 @@ func NewAccountsQ(db *pgdb.DB) data.Accounts {
 
 func (q *accountsQ) WhereID(id ...uuid.UUID) data.Accounts {
 	q.sel = q.sel.Where(sq.Eq{idColumnName: id})
+	return q
+}
+
+func (q *accountsQ) LDelete(id uuid.UUID) error {
+	return q.db.Exec(
+		sq.Update(accountsTableName).
+			Set(isDeletedColumnName, true).
+			Where(sq.Eq{idColumnName: id}),
+	)
+}
+
+func (q *accountsQ) IsDeleted(isDeleted bool) data.Accounts {
+	q.sel = q.sel.Where(sq.Eq{isDeletedColumnName: isDeleted})
 	return q
 }

@@ -13,8 +13,6 @@ type Customers interface {
 	WhereEmail(email string) Customers
 	WhereUsername(username string) Customers
 	IsUnique(email, username string) (bool, error)
-
-
 }
 
 type Customer struct {

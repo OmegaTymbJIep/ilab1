@@ -408,7 +408,7 @@
             justify-content: space-between;
             transition: max-height 0.3s ease;
             overflow: hidden;
-            max-height: 800px; /* Arbitrary large value */
+            max-height: 1000px; /* Arbitrary large value */
         }
         .charts-container.hidden {
             max-height: 0;
@@ -1018,14 +1018,15 @@
             }
         });
 
-        // Create pie chart for transaction counts
-        const typeCtx = document.getElementById('transactionTypeChart').getContext('2d');
+        const typeCtx = document.getElementById('transactionTypeChart')
+            .getContext('2d');
         new Chart(typeCtx, {
             type: 'pie',
             data: {
                 labels: ['Deposits', 'Withdrawals', 'Transfers In', 'Transfers Out'],
                 datasets: [{
-                    data: [depositsCount, withdrawalsCount, transfersInCount, transfersOutCount],
+                    data: [depositsCount, withdrawalsCount,
+                        transfersInCount, transfersOutCount],
                     backgroundColor: [
                         'rgba(76, 175, 80, 0.8)',   // Green for deposits
                         'rgba(244, 67, 54, 0.8)',   // Red for withdrawals
@@ -1043,7 +1044,7 @@
             },
             options: {
                 responsive: true,
-                animation: false, // Disable animations
+                animation: false,
                 plugins: {
                     legend: {
                         position: 'bottom',
@@ -1054,7 +1055,7 @@
                                 const label = context.label || '';
                                 const value = context.raw || 0;
                                 const dataset = context.dataset;
-                                const total = dataset.data.reduce((acc, data) => acc + data, 0);
+                                const total = dataset.data.reduce((acc,data)=>acc+data, 0);
                                 const percentage = Math.round((value / total) * 100);
                                 return `${label}: ${value} (${percentage}%)`;
                             }

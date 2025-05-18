@@ -72,8 +72,7 @@ func (c *Accounts) AccountPage(w http.ResponseWriter, r *http.Request) {
 	account, err := c.model.GetAccount(CustomerID(r), accountID)
 	if err != nil {
 		if errors.Is(err, models.ErrorAccountNotFound) {
-			ape.RenderErr(w, problems.NotFound())
-			return
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 		}
 
 		InternalError(w, r, fmt.Errorf("failed to get account: %w", err))

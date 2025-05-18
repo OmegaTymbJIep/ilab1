@@ -60,7 +60,7 @@ func (m *Accounts) GetAccountList(customerID uuid.UUID) ([]*data.Account, error)
 		return nil, fmt.Errorf("failed to get accounts: %w", err)
 	}
 
-	accounts, err := m.db.Accounts().WhereID(accountIDs...).Select()
+	accounts, err := m.db.Accounts().WhereID(accountIDs...).IsDeleted(false).Select()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get accounts: %w", err)
 	}
@@ -80,6 +80,10 @@ func (m *Accounts) GetAccount(customerID, accountID uuid.UUID) (*data.Account, e
 	account := new(data.Account)
 	if ok, err := m.db.Accounts().WhereID(accountID).Get(account); err != nil || !ok {
 		return nil, fmt.Errorf("failed to get account: %w", err)
+	}
+
+	if account.IsDeleted {
+		return nil, ErrorAccountNotFound
 	}
 
 	return account, nil
@@ -118,7 +122,7 @@ func (m *Accounts) DeleteAccount(customerID, accountID uuid.UUID) error {
 			return fmt.Errorf("failed to remove customer association: %w", err)
 		}
 
-		if err = m.db.Accounts().Delete(accountID); err != nil {
+		if err = m.db.Accounts().LDelete(accountID); err != nil {
 			return fmt.Errorf("failed to delete account: %w", err)
 		}
 

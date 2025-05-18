@@ -5,7 +5,8 @@ RUN apk add git build-base
 WORKDIR /go/src/github.com/omegatymbjiep/ilab1
 COPY . .
 
-RUN GOOS=linux go build  -o /usr/local/bin/ilab1 /go/src/github.com/omegatymbjiep/ilab1/main.go
+RUN GOOS=linux go build  -o /usr/local/bin/ilab1 \
+    /go/src/github.com/omegatymbjiep/ilab1/main.go
 
 
 FROM alpine:3.9
