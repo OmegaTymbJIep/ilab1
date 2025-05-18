@@ -10,9 +10,10 @@ import (
 const (
 	InternalErrorTemplateName = "internal_error.html"
 
-	AuthTemplateName     = "auth.html"
-	AccountsTemplateName = "accounts.html"
-	AccountTemplateName  = "account.html"
+	AuthTemplateName         = "auth.html"
+	AccountsTemplateName     = "accounts.html"
+	AccountTemplateName      = "account.html"
+	ActivityLogsTemplateName = "activity_logs.html"
 
 	HomepageTemplateName = "homepage.html"
 )

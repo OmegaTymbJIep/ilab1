@@ -27,6 +27,8 @@ type AuditLogs interface {
 	Limit(limit uint64) AuditLogs
 	Offset(offset uint64) AuditLogs
 	OrderBy(orderBy ...string) AuditLogs
+
+	Count() (uint64, error)
 }
 
 type AuditLog struct {

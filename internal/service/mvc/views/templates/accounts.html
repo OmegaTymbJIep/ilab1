@@ -86,6 +86,13 @@
         }
 
         /* Create Account Card Styles */
+        .main-content {
+            flex: 1;  /* Take up all available space */
+            display: flex;
+            flex-direction: column;
+            min-height: 70vh;
+        }
+
         .create-card {
             background-color: white;
             width: 250px;
@@ -281,6 +288,44 @@
             transition-property: width;
             transition-timing-function: linear;
         }
+
+        .footer-section {
+            margin-top: auto;
+            padding: 15px 20px;
+            width: calc(100% - 40px);
+            text-align: right;
+            position: relative;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            background-color: #f1f8ff;
+            color: #0366d6;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer-button:hover {
+            background-color: #dbeeff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .footer-button .icon {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        .footer-button .text {
+            font-size: 15px;
+        }
     </style>
 </head>
 <body>
@@ -310,34 +355,43 @@
 </div>
 
 <h1 style="text-align: left; padding: 20px 0 10px 10%">Accounts</h1>
-<div class="card-container">
-    {{if .Accounts}}
-    {{range .Accounts}}
-    <a href="/account/{{.ID}}" style="text-decoration: none; color: inherit;">
-        <div class="account-card">
-            <div class="account-header" data-account-id="{{.ID}}">
-                <h3>{{.Name}}</h3>
-            </div>
-            <div class="account-body">
-                <p><strong>Balance:</strong> $<span class="account-balance-value">{{.Balance}}</span></p>
-            </div>
-        </div>
-    </a>
-    {{end}}
-    {{end}}
-    <!-- Create Account Card -->
-    <div class="account-card create-card" id="createAccountCard">
-        <div class="create-card-content">
-            <span id="plusSign" class="plus-sign">+</span>
-            <form style="display: none" class="account-form" id="createAccountForm" onsubmit="return submitNewAccount(event)">
-                <input type="text" id="newAccountName" placeholder="Account Name" required />
-                <div class="button-container">
-                    <button type="submit">Create</button>
-                    <button type="button" onclick="cancelCreateAccount(event)">Cancel</button>
+<div class="main-content">
+    <div class="card-container">
+        {{if .Accounts}}
+        {{range .Accounts}}
+        <a href="/account/{{.ID}}" style="text-decoration: none; color: inherit;">
+            <div class="account-card">
+                <div class="account-header" data-account-id="{{.ID}}">
+                    <h3>{{.Name}}</h3>
                 </div>
-            </form>
+                <div class="account-body">
+                    <p><strong>Balance:</strong> $<span class="account-balance-value">{{.Balance}}</span></p>
+                </div>
+            </div>
+        </a>
+        {{end}}
+        {{end}}
+        <!-- Create Account Card -->
+        <div class="account-card create-card" id="createAccountCard">
+            <div class="create-card-content">
+                <span id="plusSign" class="plus-sign">+</span>
+                <form style="display: none" class="account-form" id="createAccountForm" onsubmit="return submitNewAccount(event)">
+                    <input type="text" id="newAccountName" placeholder="Account Name" required />
+                    <div class="button-container">
+                        <button type="submit">Create</button>
+                        <button type="button" onclick="cancelCreateAccount(event)">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+</div>
+
+<div class="footer-section">
+    <a href="/activity" class="footer-button">
+        <span class="icon">📋</span>
+        <span class="text">View Activity History</span>
+    </a>
 </div>
 
 <!-- (The old Create Account Modal has been removed in favor of inline creation) -->

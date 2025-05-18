@@ -100,3 +100,16 @@ func (r *crudQ[T, ID]) Delete(id ID) error {
 
 	return nil
 }
+
+func (r *crudQ[T, ID]) Count() (uint64, error) {
+	var result uint64
+
+	if err := r.db.Get(&result,
+		sq.Select("COUNT(*)").
+			FromSelect(r.sel, "filtered_select"),
+	); err != nil {
+		return 0, err
+	}
+
+	return result, nil
+}

@@ -21,6 +21,7 @@ type MVC struct {
 	auth         *controllers.Auth
 	accounts     *controllers.Accounts
 	transactions *controllers.Transactions
+	activityLogs *controllers.ActivityLogs
 
 	templates *template.Template
 }
@@ -45,6 +46,7 @@ func NewMVC(log *logan.Entry, cfg config.Config) (*MVC, error) {
 		auth:         controllers.NewAuth(authModel),
 		accounts:     controllers.NewAccounts(models.NewAccounts(db, auditService)),
 		transactions: controllers.NewTransactions(models.NewTransactions(db, auditService, cfg.ATM().PublicKey)),
+		activityLogs: controllers.NewActivityLogs(auditService),
 		templates:    templates,
 	}, nil
 }
@@ -73,6 +75,8 @@ func (m *MVC) Register(r chi.Router) {
 				})
 				r.Get("/logout", controllers.LogOut)
 				r.Get("/", m.accounts.AccountListPage)
+
+				r.Get("/activity", m.activityLogs.UserActivityPage)
 			})
 		})
 

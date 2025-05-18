@@ -22,6 +22,7 @@ type CRUDQ[T IEntity[ID], ID comparable] interface {
 	Select() ([]T, error)
 	Update(entity T) error
 	Delete(id ID) error
+	Count() (uint64, error)
 }
 
 type IEntity[ID comparable] interface {

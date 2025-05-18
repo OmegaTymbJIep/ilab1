@@ -91,6 +91,39 @@ func (m *AuditService) GetAccountActivityLogs(
 	return logs, nil
 }
 
+// GetTotalLogsCount retrieves the total number of logs for a customer
+func (m *AuditService) GetTotalLogsCount(customerID uuid.UUID) (uint64, error) {
+	var count uint64
+
+	count, err := m.db.AuditLogs().WhereCustomerID(customerID).Count()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get total logs count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (m *AuditService) GetAccountDetails(customerID, accountID uuid.UUID) (*data.Account, error) {
+	hasAccess, err := m.db.CustomersAccounts().HasAccount(customerID, accountID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check account access: %w", err)
+	}
+	if !hasAccess {
+		return nil, fmt.Errorf("customer does not have access to this account")
+	}
+
+	account := new(data.Account)
+	ok, err := m.db.Accounts().WhereID(accountID).Get(account)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account: %w", err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("account not found")
+	}
+
+	return account, nil
+}
+
 func (m *AuditService) logAccountCreated(customerID uuid.UUID, accountID uuid.UUID) error {
 	err := m.LogAction(customerID, &accountID, data.AuditActionAccountCreated, nil)
 	if err != nil {

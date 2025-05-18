@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Activity History</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            color: black;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header .right-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .header button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .header button:hover {
+            background-color: #c9302c;
+        }
+        .header .right-buttons .info-modal-button {
+            background-color: #007bff;
+        }
+        .header .right-buttons .info-modal-button:hover {
+            background-color: #0062c7;
+        }
+
+        /* Activity Logs Styles */
+        .activity-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: left;
+        }
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .activity-header h2 {
+            margin: 0;
+        }
+        .activity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            table-layout: fixed;
+        }
+        .activity-table th:nth-child(1),
+        .activity-table td:nth-child(1) {
+            width: 12%;
+            white-space: nowrap;
+        }
+        .activity-table th:nth-child(2),
+        .activity-table td:nth-child(2) {
+            width: 15%;
+            white-space: nowrap;
+        }
+        .activity-table th:nth-child(3),
+        .activity-table td:nth-child(3) {
+            width: 25%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .activity-table th:nth-child(4),
+        .activity-table td:nth-child(4) {
+            width: 40%;
+        }
+        .activity-table th, .activity-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .activity-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .activity-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .pagination-info {
+            margin: 0 15px;
+        }
+        .pagination-button {
+            padding: 8px 15px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        .account-id {
+            display: inline-block;
+            max-width: 90%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9em;
+        }
+        .details-cell {
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+        .details-item {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .pagination-button:hover {
+            background-color: #0056b3;
+        }
+        .pagination-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            color: #000;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .back-link:hover {
+            color: #555;
+        }
+        .back-link span {
+            margin-right: 5px;
+        }
+
+        /* Modal Styles */
+        .info-modal,
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .info-modal-content {
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 260px;
+            min-height: 200px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            background-color: #fff;
+            text-align: left;
+        }
+        .info-modal button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .info-modal button:hover {
+            background-color: #c9302c;
+        }
+        .info-modal-content .close-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        .details-cell {
+            max-width: 300px;
+        }
+        .details-item {
+            margin-bottom: 5px;
+        }
+        .activity-action {
+            font-weight: bold;
+        }
+        .transfer-details .details-item {
+            padding-left: 10px;
+            border-left: 2px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <a href="/home" style="text-decoration: none; color: inherit;">
+        <h1>Lab 1</h1>
+    </a>
+    <div class="right-buttons">
+        <button onclick="showInfoModal()" class="info-modal-button">Info</button>
+        <button onclick="logout()">Log Out</button>
+    </div>
+</div>
+
+<div id="modalOverlay" class="modal-overlay"></div>
+
+<div id="infoModal" class="info-modal">
+    <div class="info-modal-content">
+        <h2 style="text-align: center">Student Information</h2>
+        <p><strong>Name:</strong> Levochko Anton</p>
+        <p><strong>Group:</strong> K-25</p>
+        <p><strong>Date:</strong> 2025</p>
+        <button class="close-button" onclick="closeInfoModal()">Close</button>
+    </div>
+</div>
+
+<div class="activity-container">
+    <a href="/" class="back-link">
+        <span style="margin-right: 5px; font-size: 24px; vertical-align: middle; line-height: 1;">&larr;</span>
+        Back to Accounts
+    </a>
+
+    <div class="activity-header">
+        <h2>Your Activity History</h2>
+    </div>
+
+    <table class="activity-table">
+        <thead>
+        <tr>
+            <th>Date & Time</th>
+            <th>Action</th>
+            <th>Account</th>
+            <th>Details</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{if .Logs}}
+        {{range .Logs}}
+        <tr>
+            <td>{{.CreatedAt}}</td>
+            <td class="activity-action">{{.Action}}</td>
+            <td>{{if .AccountID}}
+                <a href="/account/{{.AccountID}}" title="View account" class="account-id">{{.AccountID}}</a>
+                {{else}}-{{end}}
+            </td>
+            <td class="details-cell">
+                {{range $key, $value := .Details}}
+                <div class="details-item"><strong>{{$key}}:</strong> {{$value}}</div>
+                {{end}}
+            </td>
+        </tr>
+        {{end}}
+        {{else}}
+        <tr>
+            <td colspan="4" class="empty-message">No activity records found</td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button
+                class="pagination-button"
+                onclick="navigatePage('prev')"
+                {{if eq .Pagination.CurrentPage 1}}disabled{{end}}
+        >
+            Previous
+        </button>
+
+        <div class="pagination-info">
+            Page {{.Pagination.CurrentPage}}
+            {{if gt .Pagination.TotalPages 0}}
+            of {{.Pagination.TotalPages}}
+            {{end}}
+        </div>
+
+        <button
+                class="pagination-button"
+                onclick="navigatePage('next')"
+                {{if not .Pagination.HasMore}}disabled{{end}}
+        >
+            Next
+        </button>
+    </div>
+</div>
+
+<script>
+    function showInfoModal() {
+        document.getElementById("infoModal").style.display = "block";
+        document.getElementById("modalOverlay").style.display = "block";
+    }
+
+    function closeInfoModal() {
+        document.getElementById("infoModal").style.display = "none";
+        document.getElementById("modalOverlay").style.display = "none";
+    }
+
+    function logout() {
+        fetch('/logout', {
+            method: 'GET',
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "/auth";
+                } else {
+                    throw new Error("Logout failed");
+                }
+            })
+            .catch(error => {
+                console.error("Error during logout:", error);
+                alert("Error during logout");
+            });
+    }
+
+    function navigatePage(direction) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentLimit = parseInt(urlParams.get('limit') || '10');
+        const currentOffset = parseInt(urlParams.get('offset') || '0');
+
+        let newOffset;
+        if (direction === 'prev') {
+            newOffset = Math.max(0, currentOffset - currentLimit);
+        } else {
+            newOffset = currentOffset + currentLimit;
+        }
+
+        // Build the new URL with updated pagination params
+        urlParams.set('offset', newOffset.toString());
+        urlParams.set('limit', currentLimit.toString());
+
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+</script>
+</body>
+</html>
